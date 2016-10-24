@@ -7,6 +7,8 @@ import Erl
 import Html exposing (..)
 import Html.App
 
+import Json.Encode
+
 import Material
 import Material.Color as Color
 import Material.Layout as Layout
@@ -22,6 +24,8 @@ import Settings exposing (Settings)
 import SettingsPage
 
 import Town exposing (Town)
+
+import TownApi
 
 import TownPage
 
@@ -67,7 +71,7 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         Synchronize ->
-            { model | syncing = True } ! []
+            { model | syncing = True } ! [townServerCmd model TownApi.init]
 
         UpdateTownPage msg' ->
             TownPage.update model msg' model.townPage
@@ -99,10 +103,15 @@ handleSettingsMsg msg model =
         case msg of
             SettingsPage.SetTownUrl url ->
                 let settings = {settings | townUrl = url}
-                in {model | settings = settings} ! [WebSocket.send (Erl.toString url) "init"]
+                in {model | settings = settings} ! [townServerCmd model TownApi.init]
             SettingsPage.SetArduinoUrl url ->
                 let settings = {settings | arduinoUrl = url}
                 in {model | settings = settings} ! []
+
+
+townServerCmd : Model -> Json.Encode.Value -> Cmd Msg
+townServerCmd model value =
+    WebSocket.send (Erl.toString model.settings.townUrl) (Json.Encode.encode 0 value)
 
 -- VIEW
 
