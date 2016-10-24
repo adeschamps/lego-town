@@ -20,6 +20,12 @@ type LightState
     | Off
 
 
+genericBuilding : Building
+genericBuilding =
+    { name = "Generic Building"
+    , lights = Dict.empty
+    }
+
 cafeCorner : Building
 cafeCorner =
     { name = "Cafe Corner"
@@ -35,6 +41,5 @@ greenGrocer =
 init : Town
 init =
     { buildings = Dict.empty
-    |> Dict.insert 0 cafeCorner
-    |> Dict.insert 1 greenGrocer
+    |> Dict.insert 0 genericBuilding
     }
