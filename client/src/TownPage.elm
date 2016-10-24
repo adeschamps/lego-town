@@ -22,8 +22,8 @@ type alias Model =
         mdl : Material.Model
     }
 
-init : Model
-init =
+init : Town -> Model
+init town =
     {
         mdl = Material.model
     }
@@ -46,9 +46,7 @@ view : Model -> Town -> Html Msg
 view model town =
     Options.div []
         <| List.map (\k -> viewBuilding (k::[]) model town k) (Dict.keys town.buildings)
---        <| List.map (\k -> viewBuilding k::index model town k) (Dict.keys town.buildings)
 
---    Options.div [] <| List.map (viewBuilding 0::index model town) (Dict.keys town.buildings)
 
 viewBuilding : Index -> Model -> Town -> Int -> Html Msg
 viewBuilding index model town buildingId =

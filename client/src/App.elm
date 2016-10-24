@@ -42,11 +42,14 @@ init : Model
 init =
     let
         settings = Settings.init
+        town = Town.init
     in
-        { townPage = TownPage.init
-        , settingsPage = SettingsPage.init settings
-        , town = Town.init
+        { town = town
         , settings = settings
+        -- PAGES
+        , townPage = TownPage.init town
+        , settingsPage = SettingsPage.init settings
+        -- STATE
         , syncing = False
         , mdl = Material.model
     }
