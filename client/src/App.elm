@@ -60,7 +60,7 @@ type Msg
     = Synchronize
     | UpdateTownPage TownPage.Msg
     | UpdateSettingsPage SettingsPage.Msg
-    | NewTownMsg String
+    | TownServerMsg String
     | Mdl (Material.Msg Msg)
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -83,7 +83,7 @@ update msg model =
                 |> OutMessage.mapCmd UpdateSettingsPage
                 |> OutMessage.evaluateMaybe handleSettingsMsg Cmd.none
 
-        NewTownMsg msg ->
+        TownServerMsg msg ->
             model ! []
 
         Mdl msg' ->
@@ -159,4 +159,4 @@ main =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    WebSocket.listen (Erl.toString model.settings.townUrl) NewTownMsg
+    WebSocket.listen (Erl.toString model.settings.townUrl) TownServerMsg
