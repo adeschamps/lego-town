@@ -14,8 +14,6 @@ import Material.Scheme
 
 import OutMessage
 
-import Parts exposing (Index)
-
 import WebSocket
 
 -- LOCAL MODULES
@@ -105,44 +103,44 @@ handleSettingsMsg msg model =
 
 -- VIEW
 
-view : Index -> Model -> Html Msg
-view index model =
+view : Model -> Html Msg
+view model =
     Layout.render Mdl
         model.mdl
         [ Layout.fixedHeader
         ]
-        { header = header (0::index) model
-        , drawer = drawer (1::index) model
+        { header = header model
+        , drawer = drawer model
         , tabs = ([], [])
-        , main = body (2::index) model
+        , main = body model
         }
            |> Material.Scheme.topWithScheme Color.Blue Color.LightGreen
 
-header : Index -> Model -> List (Html Msg)
-header index model =
+header : Model -> List (Html Msg)
+header model =
     [ Layout.row []
           [ Layout.title [] [ text "LEGO Town" ]
           , Layout.spacer
           , Layout.navigation []
-              [ syncButton (0::index) model
+              [ syncButton model
               ]
           ]
     ]
 
-syncButton : Index -> Model -> Html Msg
-syncButton index model =
+syncButton : Model -> Html Msg
+syncButton model =
     Layout.link
         [ Layout.onClick Synchronize ]
         [ text "Sync" ]
 
-drawer : Index -> Model -> List (Html Msg)
-drawer index model =
-    [ Html.App.map UpdateSettingsPage <|  SettingsPage.view (0::index) model.settingsPage model.settings
+drawer : Model -> List (Html Msg)
+drawer model =
+    [ Html.App.map UpdateSettingsPage <|  SettingsPage.view model.settingsPage model.settings
     ]
 
-body : Index -> Model -> List (Html Msg)
-body index model =
-    [ Html.App.map UpdateTownPage <| TownPage.view (0::index) model.townPage model.town
+body : Model -> List (Html Msg)
+body model =
+    [ Html.App.map UpdateTownPage <| TownPage.view model.townPage model.town
     ]
 
 -- MAIN
@@ -151,7 +149,7 @@ main : Program Never
 main =
     Html.App.program
         { init = (init, Cmd.none)
-        , view = view []
+        , view = view
         , subscriptions = subscriptions
         , update = update
         }

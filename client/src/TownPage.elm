@@ -42,10 +42,10 @@ update state msg model =
                     in (model, cmd, Nothing)
 
 
-view : Index -> Model -> Town -> Html Msg
-view index model town =
+view : Model -> Town -> Html Msg
+view model town =
     Options.div []
-        <| List.map (\k -> viewBuilding (k::index) model town k) (Dict.keys town.buildings)
+        <| List.map (\k -> viewBuilding (k::[]) model town k) (Dict.keys town.buildings)
 --        <| List.map (\k -> viewBuilding k::index model town k) (Dict.keys town.buildings)
 
 --    Options.div [] <| List.map (viewBuilding 0::index model town) (Dict.keys town.buildings)

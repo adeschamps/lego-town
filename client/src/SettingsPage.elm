@@ -65,11 +65,11 @@ update msg model =
 
 -- VIEW
 
-view : Index -> Model -> Settings -> Html Msg
-view index model settings =
+view : Model -> Settings -> Html Msg
+view model settings =
     Options.div []
         [ Layout.title [] [ text "Settings" ]
-        , viewSettings index model settings
+        , viewSettings [] model settings
         ]
 
 type alias SettingInfo =
