@@ -43,7 +43,9 @@ fn main() {
                         let content = from_utf8(&*message.payload).unwrap();
                         println!("Client {} sent a text message: {}", ip, content);
                         if content == r#"{"type":"init"}"# {
-                            let response = format!(r#"{{"type":"initialize", "buildings":[{{"buildingId":0, "name":"Green Grocer", "lights":[{{"lightId":0, "isOn":false}}, {{"lightId":1, "isOn":false}}]}}]}}"#);
+                            let cafe_corner = format!(r#"{{"buildingId":0, "name":"Cafe Corner", "lights":[{{"lightId":0, "isOn":false}}, {{"lightId":1, "isOn":false}}]}}"#);
+                            let green_grocer = format!(r#"{{"buildingId":1, "name":"Green Grocer", "lights":[{{"lightId":0, "isOn":false}}, {{"lightId":1, "isOn":false}}]}}"#);
+                            let response = format!(r#"{{"type":"initialize", "buildings":[{}, {}]}}"#, cafe_corner, green_grocer);
                             println!("Sending response: {:?}", response);
                             let message = Message::text(response);
                             sender.send_message(&message).unwrap();
