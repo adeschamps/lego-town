@@ -1,0 +1,21 @@
+<!DOCTYPE HTML>
+<html>
+
+  <head>
+    <meta charset="UTF-8">
+    <title>LEGO Town</title>
+
+    <!-- JavaScript -->
+    <script src="app.js" charset="utf-8"></script>
+    <!-- Enables Textfield.onBlur in Firefox -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.js?features=Event.focusin"></script>
+  </head>
+
+  <body id="body">
+    <script type="text/javascript">
+      var node = document.getElementById('body');
+      var main = Elm.App.embed(node);
+    </script>
+  </body>
+
+</html>
