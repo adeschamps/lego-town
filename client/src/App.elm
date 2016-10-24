@@ -2,11 +2,14 @@ module App exposing (main)
 
 -- EXTERNAL MODULES
 
+import Dict
+
 import Erl
 
 import Html exposing (..)
 import Html.App
 
+import Json.Decode
 import Json.Encode
 
 import Material
@@ -39,6 +42,7 @@ type alias Model =
     , town : Town
     , settings : Settings
     , syncing : Bool
+    , errorMsg : String
     , mdl : Material.Model
     }
 
@@ -55,6 +59,7 @@ init =
         , settingsPage = SettingsPage.init settings
         -- STATE
         , syncing = False
+        , errorMsg = ""
         , mdl = Material.model
     }
 
@@ -87,8 +92,10 @@ update msg model =
                 |> OutMessage.mapCmd UpdateSettingsPage
                 |> OutMessage.evaluateMaybe handleSettingsMsg Cmd.none
 
-        TownServerMsg msg ->
-            model ! []
+        TownServerMsg payload ->
+            case Json.Decode.decodeString TownApi.msg payload of
+                Err e -> { model | errorMsg = e } ! []
+                Ok msg -> handleTownServerMsg msg model
 
         Mdl msg' ->
             Material.update msg' model
@@ -107,6 +114,23 @@ handleSettingsMsg msg model =
             SettingsPage.SetArduinoUrl url ->
                 let settings = {settings | arduinoUrl = url}
                 in {model | settings = settings} ! []
+
+
+handleTownServerMsg : TownApi.Msg -> Model -> (Model, Cmd Msg)
+handleTownServerMsg msg model =
+    case msg of
+        TownApi.Initialize buildingInfo ->
+            let
+                prepLight light = (light.lightId, { lightState = if light.isOn then Town.On else Town.Off } )
+                parseLights = Dict.fromList << List.map prepLight
+                prep bi = (bi.buildingId, { name = bi.name , lights = parseLights bi.lights})
+                buildings = Dict.fromList <| List.map prep buildingInfo
+                town = model.town
+                newTown = { town | buildings = buildings }
+            in
+                { model | town = newTown } ! []
+
+        TownApi.SetLights buildingId lights -> model ! []
 
 
 townServerCmd : Model -> Json.Encode.Value -> Cmd Msg
@@ -153,6 +177,7 @@ drawer model =
 body : Model -> List (Html Msg)
 body model =
     [ Html.App.map UpdateTownPage <| TownPage.view model.townPage model.town
+    , text model.errorMsg
     ]
 
 -- MAIN
