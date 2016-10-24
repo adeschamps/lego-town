@@ -1,9 +1,10 @@
 module TownApi exposing (..)
 
+import Json.Encode as Enc
 import Json.Decode exposing (..)
 import Json.Decode.Extra exposing (..)
 
--- MESSAGES
+-- INCOMING MESSAGES
 
 type alias BuildingId = Int
 
@@ -53,3 +54,11 @@ lightState =
     succeed LightState
         |: ("lightId" := int)
         |: ("isOn" := bool)
+
+-- OUTGOING MESSAGES
+
+init : Value
+init =
+    Enc.object
+        [ ("type", Enc.string "init")
+        ]
