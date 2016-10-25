@@ -1,5 +1,5 @@
 [package]
-name = "rust-server"
+name = "lego-server"
 version = "0.1.0"
 authors = ["Anthony Deschamps <anthony.j.deschamps@gmail.com>"]
 
