@@ -101,7 +101,10 @@ update msg model =
             Material.update msg' model
 
 handleTownMsg : TownPage.OutMsg -> Model -> (Model, Cmd Msg)
-handleTownMsg msg model = model ! []
+handleTownMsg msg model =
+    case msg of
+        TownPage.Api apiMsg ->
+            model ! [townServerCmd model apiMsg]
 
 handleSettingsMsg : SettingsPage.OutMsg -> Model -> (Model, Cmd Msg)
 handleSettingsMsg msg model =
