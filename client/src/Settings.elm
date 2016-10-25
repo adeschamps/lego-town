@@ -9,7 +9,7 @@ type alias Settings =
 
 init : Settings
 init =
-    { townUrl = Erl.parse "ws://127.0.0.1:1234"
+    { townUrl = Erl.parse "ws://192.168.1.136:1234"
     , arduinoUrl = Erl.parse "127.0.0.1:5000"
     }
 
