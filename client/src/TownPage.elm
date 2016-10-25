@@ -16,6 +16,7 @@ import Material.Options as Options
 import Parts exposing (Index)
 
 import Town exposing (Town, Building)
+import TownApi
 
 type alias Model =
     {
@@ -29,17 +30,37 @@ init town =
     }
 
 type Msg
-    = Mdl (Material.Msg Msg)
+    = SetBuilding Int Town.LightState
+    | SetLight Int Int Town.LightState
+    | Mdl (Material.Msg Msg)
 
 
 type OutMsg
-    = NoOp
+    = Api TownApi.Type
 
 update : state -> Msg -> Model -> (Model, Cmd Msg, Maybe OutMsg)
 update state msg model =
-    case msg of
-        Mdl msg' -> let (model, cmd) = Material.update msg' model
-                    in (model, cmd, Nothing)
+    let
+        isOn lightState =
+            case lightState of
+                Town.On -> True
+                Town.Off -> False
+    in
+        case msg of
+            SetBuilding buildingId lightState ->
+                ( model
+                , Cmd.none
+                , Just <| Api <| TownApi.setBuilding buildingId (lightState |> isOn)
+                )
+
+            SetLight buildingId lightId lightState ->
+                ( model
+                , Cmd.none
+                , Just <| Api <| TownApi.setLight buildingId lightId (lightState |> isOn)
+                )
+
+            Mdl msg' -> let (model, cmd) = Material.update msg' model
+                        in (model, cmd, Nothing)
 
 
 view : Model -> Town -> Html Msg
@@ -62,8 +83,12 @@ viewBuilding index model town buildingId =
                     [ Card.title [] [ Card.head [ Color.text Color.white ] [ text building.name ] ]
                     , Card.text [ Card.expand ] [] -- filler
                     , Card.actions []
-                        [ Button.render Mdl (0::index) model.mdl [ Button.icon, Button.ripple ] [ Icon.i "lightbulb_outline" ]
-                        ]
+                          [ Button.render Mdl (0::index) model.mdl
+                                [ Button.icon, Button.ripple
+                                , Button.onClick <| SetBuilding buildingId Town.On
+                                ]
+                                [ Icon.i "lightbulb_outline" ]
+                          ]
                     ]
 
 
