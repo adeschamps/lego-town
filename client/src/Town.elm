@@ -1,5 +1,6 @@
 module Town exposing (..)
 
+import Color exposing (Color)
 import Dict exposing (Dict)
 
 type alias Town =
@@ -8,17 +9,8 @@ type alias Town =
 
 type alias Building =
     { name : String
-    , lights : Dict Int Light
+    , lights : Dict Int Color
     }
-
-type alias Light =
-    { lightState : LightState
-    }
-
-type LightState
-    = On
-    | Off
-
 
 genericBuilding : Building
 genericBuilding =

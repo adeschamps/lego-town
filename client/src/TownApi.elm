@@ -1,8 +1,13 @@
 module TownApi exposing (..)
 
+import Color exposing (Color)
+import Color.Convert exposing (..)
+
 import Json.Encode as Enc
 import Json.Decode exposing (..)
 import Json.Decode.Extra exposing (..)
+
+import Result exposing (fromMaybe)
 
 -- INCOMING MESSAGES
 
@@ -20,7 +25,7 @@ type alias BuildingInfo =
 
 type alias LightState =
     { lightId : Int
-    , isOn : Bool
+    , color : Color
     }
 
 -- DECODERS
@@ -53,7 +58,14 @@ lightState : Decoder LightState
 lightState =
     succeed LightState
         |: ("lightId" := int)
-        |: ("isOn" := bool)
+        |: ("color" := color)
+
+color : Decoder Color
+color =
+    let
+        decodeColor c = hexToColor c |>  fromMaybe ("Invalid color: " ++ c)
+    in
+        customDecoder string decodeColor
 
 -- OUTGOING MESSAGES
 
@@ -67,18 +79,21 @@ init =
         [ ("type", Enc.string "init")
         ]
 
-setBuilding : Int -> Bool -> Value
-setBuilding buildingId isOn =
+setBuilding : Int -> Color -> Value
+setBuilding buildingId color =
     Enc.object
         [ ("type",       Enc.string "setBuilding")
         , ("buildingId", Enc.int buildingId)
-        , ("isOn",       Enc.bool isOn)]
+        , ("color",      encColor color)]
 
-setLight : Int -> Int -> Bool -> Value
-setLight buildingId lightId isOn =
+setLight : Int -> Int -> Color -> Value
+setLight buildingId lightId color =
     Enc.object
         [ ("type",       Enc.string "setLight")
         , ("buildingId", Enc.int buildingId)
         , ("lightId",    Enc.int lightId)
-        , ("isOn",       Enc.bool isOn)
+        , ("color",      encColor color)
         ]
+
+encColor : Color -> Value
+encColor = Enc.string << colorToHex
