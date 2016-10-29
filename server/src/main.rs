@@ -37,13 +37,14 @@ impl<'a> Handler for Client<'a> {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<(), ws::Error> {
-        let msg = match msg {
-            Message::Text(msg) => msg,
-            Message::Binary(_) => {
-                println!("Binary messages not supported");
+        let msg = match msg.as_text() {
+            Ok(msg) => msg,
+            Err(e) => {
+                println!("Message is not text: {}", e);
                 return Ok(())
             }
         };
+
         println!("Received message: {}", msg);
         let msg = match json::parse(&msg) {
             Ok(msg) => msg,
@@ -52,14 +53,11 @@ impl<'a> Handler for Client<'a> {
                 return Ok(())
             }
         };
-        if msg.is_object() {
-            println!("an object.");
-        }
 
         let msg_type = match msg["type"].as_str() {
             Some(t) => t,
             None => {
-                println!("not a string");
+                println!("type is not a string.");
                 return Ok(())
             }
         };
