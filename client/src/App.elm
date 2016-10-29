@@ -124,12 +124,14 @@ handleTownServerMsg msg model =
     case msg of
         TownApi.Initialize buildingInfo ->
             let
-                prepLight light = (light.lightId, { lightState = if light.isOn then Town.On else Town.Off } )
-                parseLights = Dict.fromList << List.map prepLight
-                prep bi = (bi.buildingId, { name = bi.name , lights = parseLights bi.lights})
-                buildings = Dict.fromList <| List.map prep buildingInfo
                 town = model.town
-                newTown = { town | buildings = buildings }
+                newTown = { town | buildings = getBuildings buildingInfo }
+
+                getBuildings = Dict.fromList << List.map buildingKeyValue
+                buildingKeyValue b = ( b.buildingId , { name = b.name , lights = getLights b.lights } )
+
+                getLights = Dict.fromList << List.map lightKeyValue
+                lightKeyValue l = ( l.lightId , l.color )
             in
                 { model | town = newTown } ! []
 
