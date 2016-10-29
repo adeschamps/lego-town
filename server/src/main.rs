@@ -1,66 +1,89 @@
-extern crate websocket;
-use std::str::from_utf8;
-use std::thread;
-use websocket::message::Type;
-use websocket::{Server, Message, Sender, Receiver};
-use websocket::server::{Connection};
-use websocket::stream::{WebSocketStream};
+#[macro_use]
+extern crate json;
+extern crate ws;
 
-fn main() {
-    let server = Server::bind("0.0.0.0:1234").unwrap();
+use json::{JsonValue};
+use std::fs::File;
+use std::io::Read;
+use ws::{listen, Handler, Handshake, Message, Sender};
 
-    for connection in server {
-        thread::spawn(|| handle_connection(connection.unwrap()));
+struct Client<'a> {
+    out: Sender,
+    init_data: &'a JsonValue
+}
+
+impl<'a> Client<'a> {
+    fn new(out: Sender, init_data: &'a JsonValue) -> Client {
+        Client{
+            out: out,
+            init_data: init_data
+        }
+    }
+
+    fn handle_init(&mut self) -> Result<(), ws::Error> {
+        let s = format!("{}", self.init_data);
+        self.out.send(s)
+    }
+
+    fn handle_set_building(&mut self) -> Result<(), ws::Error> {
+        Ok(())
     }
 }
 
-fn handle_connection(connection: Connection<WebSocketStream, WebSocketStream>) {
-    let mut client =
-        connection
-        .read_request().unwrap()
-        .accept()
-        .send().unwrap();
+impl<'a> Handler for Client<'a> {
+    fn on_open(&mut self, handshake: Handshake) -> Result<(), ws::Error> {
+        println!("Client connected from {}", handshake.peer_addr.unwrap());
+        Ok(())
+    }
 
-    let ip = client.get_mut_sender()
-        .get_mut()
-        .peer_addr()
-        .unwrap();
-
-    println!("Connection from {}", ip);
-
-    let (mut sender, mut receiver) = client.split();
-
-    for message in receiver.incoming_messages() {
-        let message: Message = message.unwrap();
-
-        match message.opcode {
-            Type::Close => {
-                let message = Message::close();
-                sender.send_message(&message).unwrap();
-                println!("Client {} disconnected", ip);
-                return;
-            },
-            Type::Ping => {
-                let message = Message::pong(message.payload);
-                sender.send_message(&message).unwrap();
-                println!("Client {} pinged", ip);
-            },
-            Type::Text => {
-                let content = from_utf8(&*message.payload).unwrap();
-                println!("Client {} sent a text message: {}", ip, content);
-                if content == r#"{"type":"init"}"# {
-                    let cafe_corner = format!(r#"{{"buildingId":0, "name":"Cafe Corner", "lights":[{{"lightId":0, "isOn":false}}, {{"lightId":1, "isOn":false}}]}}"#);
-                    let green_grocer = format!(r#"{{"buildingId":1, "name":"Green Grocer", "lights":[{{"lightId":0, "isOn":false}}, {{"lightId":1, "isOn":false}}]}}"#);
-                    let response = format!(r#"{{"type":"initialize", "buildings":[{}, {}]}}"#, cafe_corner, green_grocer);
-                    println!("Sending response: {:?}", response);
-                    let message = Message::text(response);
-                    sender.send_message(&message).unwrap();
-                }
-            },
-            _ => {
-                sender.send_message(&message).unwrap();
-                println!("Client {} sent a message: {:?}", ip, message);
+    fn on_message(&mut self, msg: Message) -> Result<(), ws::Error> {
+        let msg = match msg {
+            Message::Text(msg) => msg,
+            Message::Binary(_) => {
+                println!("Binary messages not supported");
+                return Ok(())
             }
+        };
+        println!("Received message: {}", msg);
+        let msg = match json::parse(&msg) {
+            Ok(msg) => msg,
+            Err(_) => {
+                println!("Failed to parse json.");
+                return Ok(())
+            }
+        };
+        if msg.is_object() {
+            println!("an object.");
+        }
+
+        let msg_type = match msg["type"].as_str() {
+            Some(t) => t,
+            None => {
+                println!("not a string");
+                return Ok(())
+            }
+        };
+
+        println!("message type: {}", msg_type);
+        match msg_type {
+            "init" => self.handle_init(),
+            "setBuilding" => self.handle_set_building(),
+            _ => Ok(())
         }
     }
+}
+
+fn main() {
+    let mut f = match File::open("init-data.json") {
+        Err(why) => panic!("Couldn't open file: {}", why),
+        Ok(file) => file
+    };
+    let mut s = String::new();
+    match f.read_to_string(&mut s) {
+        Err(why) => panic!("Failed to read file: {}", why),
+        Ok(x) => x
+    };
+    let init_data = json::parse(s.as_ref()).unwrap();
+
+    listen("0.0.0.0:1234", |out| Client::new(out, &init_data)).unwrap();
 }
