@@ -1,8 +1,12 @@
 module TownPage exposing (..)
 
+import Color as StdColor exposing (hsl)
+
 import Dict
 
 import Html exposing (..)
+
+import List.Extra exposing (takeWhile)
 
 import Material
 import Material.Button as Button
@@ -30,8 +34,8 @@ init town =
     }
 
 type Msg
-    = SetBuilding Int Town.LightState
-    | SetLight Int Int Town.LightState
+    = SetBuilding Int StdColor.Color
+    | SetLight Int Int StdColor.Color
     | Mdl (Material.Msg Msg)
 
 
@@ -40,27 +44,21 @@ type OutMsg
 
 update : state -> Msg -> Model -> (Model, Cmd Msg, Maybe OutMsg)
 update state msg model =
-    let
-        isOn lightState =
-            case lightState of
-                Town.On -> True
-                Town.Off -> False
-    in
-        case msg of
-            SetBuilding buildingId lightState ->
-                ( model
-                , Cmd.none
-                , Just <| Api <| TownApi.setBuilding buildingId (lightState |> isOn)
-                )
+    case msg of
+        SetBuilding buildingId color ->
+            ( model
+            , Cmd.none
+            , Just <| Api <| TownApi.setBuilding buildingId color
+            )
 
-            SetLight buildingId lightId lightState ->
-                ( model
-                , Cmd.none
-                , Just <| Api <| TownApi.setLight buildingId lightId (lightState |> isOn)
-                )
+        SetLight buildingId lightId color ->
+            ( model
+            , Cmd.none
+            , Just <| Api <| TownApi.setLight buildingId lightId color
+            )
 
-            Mdl msg' -> let (model, cmd) = Material.update msg' model
-                        in (model, cmd, Nothing)
+        Mdl msg' -> let (model, cmd) = Material.update msg' model
+                    in (model, cmd, Nothing)
 
 
 view : Model -> Town -> Html Msg
@@ -83,14 +81,37 @@ viewBuilding index model town buildingId =
                     [ Card.title [] [ Card.head [ Color.text Color.white ] [ text building.name ] ]
                     , Card.text [ Card.expand ] [] -- filler
                     , Card.actions []
+                        <| List.indexedMap (\i color -> viewColorButton (i::index) model color (SetBuilding buildingId)) lightColors
+            {-
                           [ Button.render Mdl (0::index) model.mdl
                                 [ Button.icon, Button.ripple
-                                , Button.onClick <| SetBuilding buildingId Town.On
+                                , Color.text Color.white
+                                , Color.background Color.white
+                                , Button.onClick <| SetBuilding buildingId StdColor.white
                                 ]
                                 [ Icon.i "lightbulb_outline" ]
                           ]
+             -}
                     ]
 
+viewColorButton : Index -> Model -> StdColor.Color -> (StdColor.Color -> Msg) -> Html Msg
+viewColorButton index model color onClick =
+    Button.render Mdl (0::index) model.mdl
+        [ Button.icon
+        , Button.ripple
+--        , Color.text color
+        , Color.background Color.white
+        , Button.onClick <| onClick color
+        ]
+        [ Icon.i "lightbulb_outline" ]
+
+lightColors : List StdColor.Color
+lightColors =
+    [1..11]
+        |> List.map (\d -> d * 30)
+        |> List.map degrees
+        |> takeWhile (\h -> h < 360)
+        |> List.map (\h -> hsl h 1.0 0.5)
 
 type alias BuildingStyle =
     { hue : Color.Hue
