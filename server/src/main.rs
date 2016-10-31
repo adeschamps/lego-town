@@ -16,23 +16,25 @@ use std::time;
 use std::sync::mpsc;
 
 fn main() {
+    // Initialize town model
     let init_data = load_init_data("init-data.json");
-
-    let arduino_addr = "127.0.0.1:12345";
-    let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
-
-    let (tx, rx) = mpsc::channel();
     let town = town::Town::new(init_data).unwrap();
     let town = Arc::new(Mutex::new(town));
 
-    let town_controller = town_controller::TownController::new(socket, town.clone(), rx);
-
+    // Create town controller
+    let (tx, rx) = mpsc::channel();
+    let arduino_addr = "127.0.0.1:12345";
+    let town_controller = town_controller::TownController::new(arduino_addr, town.clone(), rx);
     thread::spawn(move || town_controller.run());
 
+    // Listen for websocket connections
     println!("Listening for clients...");
-    ws::listen("0.0.0.0:1234", |out| {
+    match ws::listen("0.0.0.0:1234", |out| {
         client::Client::new(out, town.clone(), tx.clone())
-    }).unwrap();
+    }) {
+        Ok(()) => {}
+        Err(why) => panic!("Failed to create WebSocket server: {}", why)
+    };
 }
 
 fn load_init_data(filename: &str) -> JsonValue {
