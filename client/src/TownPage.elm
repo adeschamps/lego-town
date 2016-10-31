@@ -108,8 +108,7 @@ viewColorButton index model color onClick =
 lightColors : List StdColor.Color
 lightColors =
     [1..11]
-        |> List.map (\d -> d * 30)
-        |> List.map degrees
+        |> List.map (\d -> d * 30 |> degrees)
         |> takeWhile (\h -> h < 360)
         |> List.map (\h -> hsl h 1.0 0.5)
 
