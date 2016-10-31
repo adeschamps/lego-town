@@ -49,25 +49,6 @@ impl Town  {
         )
     }
 
-    /*
-    pub fn add_client(&mut self, sender: Sender) {
-        self.client_sockets.push(sender);
-    }
-
-    pub fn run(&self) {
-        loop {
-            println!("running...");
-            thread::sleep(time::Duration::from_secs(1));
-        }
-    }
-
-    pub fn set_light(&self) {
-//        for client in self.client_sockets {
-//            client.send("test-message").unwrap();
-//        }
-    }
-    */
-
     pub fn get_state(&self) -> JsonValue {
         object!{
             "type" => "initialize",
