@@ -1,36 +1,31 @@
 {
-  "type": "initialize",
   "buildings": [
     {
-      "buildingId": 0,
       "name": "Cafe Corner",
       "lights": [
-        { "lightId": 0, "color": "#ff0000" },
-        { "lightId": 1, "color": "#ff0000" }
+        { "color": "#ff0000" },
+        { "color": "#ff0000" }
       ]
     },
     {
-      "buildingId": 1,
       "name": "Green Grocer",
       "lights": [
-        { "lightId": 0, "color": "#00ff00" },
-        { "lightId": 1, "color": "#00ff00" }
+        { "color": "#00ff00" },
+        { "color": "#00ff00" }
       ]
     },
     {
-      "buildingId": 2,
       "name": "Fire Brigade",
       "lights": [
-        { "lightId": 0, "color": "#0000ff" },
-        { "lightId": 1, "color": "#0000ff" }
+        { "color": "#0000ff" },
+        { "color": "#0000ff" }
       ]
     },
     {
-      "buildingId": 3,
       "name": "Grand Emporium",
       "lights": [
-        { "lightId": 0, "color": "#ff00ff" },
-        { "lightId": 1, "color": "#ff00ff" }
+        { "color": "#ff00ff" },
+        { "color": "#ff00ff" }
       ]
     }
   ]
