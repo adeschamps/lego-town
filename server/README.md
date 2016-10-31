@@ -7,5 +7,5 @@ Right now, it loads the town configuration and can respond to init queries from 
 Usage:
 
 ```bash
-cargo run
+$ cargo run
 ```
