@@ -3,7 +3,7 @@ use town;
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
-use std::io;
+
 pub struct TownCommand {}
 
 pub struct TownController {

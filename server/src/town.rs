@@ -1,10 +1,6 @@
 extern crate read_color;
 
 use json::{JsonValue};
-use std::net::UdpSocket;
-use std::thread;
-use std::time;
-use std::rc::Rc;
 
 pub struct Town {
     buildings: Vec<Building>

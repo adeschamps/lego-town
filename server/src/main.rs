@@ -9,10 +9,8 @@ extern crate ws;
 use json::{JsonValue};
 use std::fs::File;
 use std::io::Read;
-use std::net::UdpSocket;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time;
 use std::sync::mpsc;
 
 fn main() {
