@@ -5,4 +5,5 @@ authors = ["Anthony Deschamps <anthony.j.deschamps@gmail.com>"]
 
 [dependencies]
 json = "0.10.2"
+read_color = "0.1.0"
 ws = "0.5.3"

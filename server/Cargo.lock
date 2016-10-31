@@ -3,6 +3,7 @@ name = "lego-server"
 version = "0.1.0"
 dependencies = [
  "json 0.10.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "read_color 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ws 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -122,6 +123,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "read_color"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "sha1"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -211,6 +217,7 @@ dependencies = [
 "checksum net2 0.2.26 (registry+https://github.com/rust-lang/crates.io-index)" = "5edf9cb6be97212423aed9413dd4729d62b370b5e1c571750e882cebbbc1e3e2"
 "checksum nix 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "bfb3ddedaa14746434a02041940495bf11325c22f6d36125d3bdd56090d50a79"
 "checksum rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)" = "2791d88c6defac799c3f20d74f094ca33b9332612d9aef9078519c82e4fe04a5"
+"checksum read_color 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "682bfa200630193df2954f2632b690c4643563fd6abc575edc1239bcfe57ad83"
 "checksum sha1 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "cc30b1e1e8c40c121ca33b86c23308a090d19974ef001b4bf6e61fd1a0fb095c"
 "checksum slab 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "d807fd58c4181bbabed77cb3b891ba9748241a552bcc5be698faaebefc54f46e"
 "checksum time 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)" = "3c7ec6d62a20df54e07ab3b78b9a3932972f4b7981de295563686849eb3989af"
