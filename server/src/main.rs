@@ -1,5 +1,6 @@
-mod town;
 mod client;
+mod town;
+mod town_controller;
 
 #[macro_use]
 extern crate json;
@@ -9,21 +10,29 @@ use json::{JsonValue};
 use std::fs::File;
 use std::io::Read;
 use std::net::UdpSocket;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time;
+use std::sync::mpsc;
 
 fn main() {
     let init_data = load_init_data("init-data.json");
 
-    // Some test code for sending commands to the arduino
     let arduino_addr = "127.0.0.1:12345";
     let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
-    let msg = "hello";
-    let buf = msg.as_bytes();
-    socket.send_to(buf, arduino_addr).unwrap();
-    println!("Sent msg: {}", msg);
 
-    let town = town::Town::new(socket, init_data).unwrap();
+    let (tx, rx) = mpsc::channel();
+    let town = town::Town::new(init_data).unwrap();
+    let town = Arc::new(Mutex::new(town));
 
-    ws::listen("0.0.0.0:1234", |out| client::Client::new(out, &town)).unwrap();
+    let town_controller = town_controller::TownController::new(socket, town.clone(), rx);
+
+    thread::spawn(move || town_controller.run());
+
+    println!("Listening for clients...");
+    ws::listen("0.0.0.0:1234", |out| {
+        client::Client::new(out, town.clone(), tx.clone())
+    }).unwrap();
 }
 
 fn load_init_data(filename: &str) -> JsonValue {
@@ -36,6 +45,5 @@ fn load_init_data(filename: &str) -> JsonValue {
         Err(why) => panic!("Failed to read file: {}", why),
         Ok(x) => x
     };
-    let init_data = json::parse(s.as_ref()).unwrap();
-    init_data
+    json::parse(s.as_ref()).unwrap()
 }

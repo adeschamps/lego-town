@@ -1,34 +1,42 @@
 use town;
+use town_controller;
 
 extern crate ws;
-use ws::{Handler, Handshake, Message, Sender};
-
+use ws::{Error, Handler, Handshake, Message};
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc;
 use json;
 
-pub struct Client<'a> {
-    out: Sender,
-    town: &'a town::Town
+pub struct Client {
+    out: ws::Sender,
+    town: Arc<Mutex<town::Town>>,
+    town_command: mpsc::Sender<town_controller::TownCommand>
 }
 
-impl<'a> Client<'a> {
-    pub fn new(out: Sender, town: &'a town::Town) -> Client {
+impl Client {
+    pub fn new(out: ws::Sender,
+               town: Arc<Mutex<town::Town>>,
+               town_command: mpsc::Sender<town_controller::TownCommand>) -> Client {
         Client{
             out: out,
-            town: town
+            town: town,
+            town_command: town_command
         }
     }
 
     fn handle_init(&self) -> Result<(), ws::Error> {
-        let s = format!("{}", self.town.get_state());
-        self.out.send(s)
+        let town = self.town.lock().unwrap();
+        let state = format!("{}", town.get_state());
+        self.out.send(state)
     }
 
     fn handle_set_building(&self) -> Result<(), ws::Error> {
+        // self.town.set_light();
         Ok(())
     }
 }
 
-impl<'a> Handler for Client<'a> {
+impl Handler for Client {
     fn on_open(&mut self, handshake: Handshake) -> Result<(), ws::Error> {
         println!("Client connected from {}", handshake.peer_addr.unwrap());
         Ok(())
@@ -66,5 +74,9 @@ impl<'a> Handler for Client<'a> {
             "setBuilding" => self.handle_set_building(),
             _ => Ok(())
         }
+    }
+
+    fn on_error(&mut self, error: Error) {
+        println!("The server encountered an error: {}", error)
     }
 }

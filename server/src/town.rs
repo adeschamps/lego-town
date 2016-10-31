@@ -1,9 +1,13 @@
+extern crate read_color;
+
 use json::{JsonValue};
 use std::net::UdpSocket;
+use std::thread;
+use std::time;
+use std::rc::Rc;
 
 pub struct Town {
-    buildings: Vec<Building>,
-    socket: UdpSocket
+    buildings: Vec<Building>
 }
 
 struct Building {
@@ -23,14 +27,13 @@ impl Light {
 }
 
 impl Town  {
-    pub fn new(socket: UdpSocket, init_data: JsonValue) -> Result<Town, String> {
+    pub fn new(init_data: JsonValue) -> Result<Town, String> {
         let buildings = match Town::init_buildings(init_data) {
             Ok(buildings) => buildings,
             Err(e) => return Err(e)
         };
         Ok(Town{
-            buildings: buildings,
-            socket: socket
+            buildings: buildings
         })
     }
 
@@ -39,11 +42,31 @@ impl Town  {
             init_data["buildings"].members().map(|b| Building{
                 name: b["name"].to_string(),
                 lights: b["lights"].members().map(|l| Light{
-                    color: [0; 3]
+                    // TODO: Fix this horrible colour parsing
+                    color: read_color::rgb(l["color"].as_str().unwrap()[1..].chars().by_ref()).unwrap()
                 }).collect::<Vec<_>>()
             }).collect::<Vec<_>>()
         )
     }
+
+    /*
+    pub fn add_client(&mut self, sender: Sender) {
+        self.client_sockets.push(sender);
+    }
+
+    pub fn run(&self) {
+        loop {
+            println!("running...");
+            thread::sleep(time::Duration::from_secs(1));
+        }
+    }
+
+    pub fn set_light(&self) {
+//        for client in self.client_sockets {
+//            client.send("test-message").unwrap();
+//        }
+    }
+    */
 
     pub fn get_state(&self) -> JsonValue {
         object!{
