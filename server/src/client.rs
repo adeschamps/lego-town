@@ -1,6 +1,5 @@
 use client_api;
 use town;
-use town_controller;
 
 extern crate try_from;
 use client::try_from::TryFrom;
