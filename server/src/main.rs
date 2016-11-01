@@ -1,4 +1,5 @@
 mod client;
+mod client_api;
 mod town;
 mod town_controller;
 
