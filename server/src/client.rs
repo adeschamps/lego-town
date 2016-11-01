@@ -1,22 +1,26 @@
+use client_api;
 use town;
 use town_controller;
 
+extern crate try_from;
+use client::try_from::TryFrom;
 extern crate ws;
 use ws::{Error, Handler, Handshake, Message};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
 use json;
 
+
 pub struct Client {
     out: ws::Sender,
     town: Arc<Mutex<town::Town>>,
-    town_command: mpsc::Sender<town_controller::TownCommand>
+    town_command: mpsc::Sender<client_api::Msg>
 }
 
 impl Client {
     pub fn new(out: ws::Sender,
                town: Arc<Mutex<town::Town>>,
-               town_command: mpsc::Sender<town_controller::TownCommand>) -> Client {
+               town_command: mpsc::Sender<client_api::Msg>) -> Client {
         Client{
             out: out,
             town: town,
@@ -28,11 +32,6 @@ impl Client {
         let town = self.town.lock().unwrap();
         let state = format!("{}", town.get_state());
         self.out.send(state)
-    }
-
-    fn handle_set_building(&self) -> Result<(), ws::Error> {
-        // self.town.set_light();
-        Ok(())
     }
 }
 
@@ -54,25 +53,34 @@ impl Handler for Client {
         println!("Received message: {}", msg);
         let msg = match json::parse(&msg) {
             Ok(msg) => msg,
-            Err(_) => {
-                println!("Failed to parse json.");
+            Err(e) => {
+                println!("Failed to parse json: {}", e);
                 return Ok(())
             }
         };
 
-        let msg_type = match msg["type"].as_str() {
-            Some(t) => t,
-            None => {
-                println!("type is not a string.");
+        let msg = match client_api::Msg::try_from(msg) {
+            Ok(msg) => msg,
+            Err(e) => {
+                println!("Failed to convert json to message: {}", e);
                 return Ok(())
             }
         };
 
-        println!("message type: {}", msg_type);
-        match msg_type {
-            "init" => self.handle_init(),
-            "setBuilding" => self.handle_set_building(),
-            _ => Ok(())
+        match msg {
+            client_api::Msg::Init => {
+                self.handle_init()
+            },
+
+            client_api::Msg::SetBuilding{..} => {
+                self.town_command.send(msg);
+                Ok(())
+            }
+
+            client_api::Msg::SetLight{..} => {
+                self.town_command.send(msg);
+                Ok(())
+            }
         }
     }
 
