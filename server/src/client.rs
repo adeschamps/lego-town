@@ -29,7 +29,7 @@ impl Client {
 
     fn handle_init(&self) -> Result<(), ws::Error> {
         let town = self.town.lock().unwrap();
-        let state = format!("{}", town.get_state());
+        let state = town.get_state().dump();
         self.out.send(state)
     }
 }
@@ -69,7 +69,7 @@ impl Handler for Client {
         match msg {
             client_api::Msg::Init => {
                 self.handle_init()
-            },
+            }
 
             client_api::Msg::SetBuilding{..} => {
                 self.town_command.send(msg);
