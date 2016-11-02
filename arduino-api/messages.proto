@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package light_controller;
+
+message Command {
+  oneof CommandType {
+    SetLight set_light = 1;
+    SetGroup set_group = 2;
+  }
+}
+
+message SetLight {
+  int32 light_group = 1;
+  int32 light_id = 2;
+  Color color = 3;
+}
+
+message SetGroup {
+  int32 light_group = 1;
+  Color color = 2;
+}
+
+message Color {
+  int32 red = 1;
+  int32 green = 2;
+  int32 blue = 3;
+}
