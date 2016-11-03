@@ -1,11 +1,13 @@
 mod client;
 mod client_api;
+mod messages;
 mod town;
 mod town_controller;
 
 #[macro_use]
 extern crate json;
 extern crate ws;
+extern crate protobuf;
 
 use json::{JsonValue};
 use std::fs::File;
