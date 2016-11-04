@@ -19,8 +19,7 @@ fn main() {
     // TODO: Clean this up
     // Wrap the generated file in pub mod messages { ... }
     // This allows it to be included in the source with
-    // use messages::messages, which is still slightly clunky,
-    // but it's alright.
+    // use messages;
     let file_path = out_dir.join("messages.rs");
     let file = match File::open(file_path.clone()) {
         Ok(file) => file,
