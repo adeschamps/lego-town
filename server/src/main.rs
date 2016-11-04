@@ -1,8 +1,8 @@
 mod client;
 mod client_api;
-mod messages;
 mod town;
 mod town_controller;
+include!(concat!(env!("OUT_DIR"), "/messages.rs"));
 
 #[macro_use]
 extern crate json;
