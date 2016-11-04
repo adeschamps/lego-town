@@ -1,3 +1,5 @@
+extern crate read_color;
+
 use client_api;
 use town;
 use messages;
@@ -44,9 +46,16 @@ impl TownController {
                     self.send(c);
                     println!("Set light")
                 },
-                    client_api::Msg::SetBuilding{..} => {
+                client_api::Msg::SetBuilding{building_id, color} => {
                     let mut c = messages::Command::new();
                     let mut sg = messages::SetGroup::new();
+                    let mut col = messages::Color::new();
+                    let color = read_color::rgb(color.as_str()[1..].chars().by_ref()).unwrap();
+                    col.set_red(color[0] as i32);
+                    col.set_green(color[1] as i32);
+                    col.set_blue(color[2] as i32);
+                    sg.set_light_group(building_id);
+                    sg.set_color(col);
                     c.set_set_group(sg);
                     self.send(c);
                     println!("Set Building")
