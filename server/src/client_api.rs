@@ -39,22 +39,16 @@ impl try_from::TryFrom<Json> for Msg {
             }
 
             "setBuilding" => {
-                let building_id = match msg.get("buildingId") {
-                    Some(id) => id,
-                    Nothing => return Err(format!("Missing \"buildingId\" field."))
-                };
-                let building_id = match building_id.as_i64() {
-                    Some(id) => id as i32,
-                    Nothing => return Err(format!("\"buildingId\" field is not an integer."))
-                };
-                let color = match msg.get("color") {
-                    Some(color) => color,
-                    Nothing => return Err(format!("Missing \"color\" field."))
-                };
-                let color = match color.as_string() {
-                    Some(color) => color.to_string(),
-                    Nothing => return Err(format!("\"color\" field is not a string"))
-                };
+                let building_id =
+                    try!(msg.get("buildingId").ok_or("Missing \"buildingId\""));
+                let building_id =
+                    try!(building_id.as_i64().ok_or("\"buildingId\" is not an integer")) as i32;
+
+                let color =
+                    try!(msg.get("color").ok_or("Missing \"color\""));
+                let color =
+                    try!(color.as_string().ok_or("\"color\" is not a string")).to_string();
+
                 Msg::SetBuilding {
                     building_id: building_id,
                     color: color
@@ -62,30 +56,21 @@ impl try_from::TryFrom<Json> for Msg {
             }
 
             "setLight" => {
-                let building_id = match msg.get("buildingId") {
-                    Some(id) => id,
-                    Nothing => return Err(format!("Missing \"buildingId\" field."))
-                };
-                let building_id = match building_id.as_i64() {
-                    Some(id) => id as i32,
-                    Nothing => return Err(format!("\"buildingId\" field is not an integer."))
-                };
-                let light_id = match msg.get("lightId") {
-                    Some(id) => id,
-                    Nothing => return Err(format!("Missing \"lightId\" field."))
-                };
-                let light_id = match light_id.as_i64() {
-                    Some(id) => id as i32,
-                    Nothing => return Err(format!("\"lightId\" field is not an integer."))
-                };
-                let color = match msg.get("color") {
-                    Some(color) => color,
-                    Nothing => return Err(format!("Missing \"color\" field."))
-                };
-                let color = match color.as_string() {
-                    Some(color) => color.to_string(),
-                    Nothing => return Err(format!("\"color\" field is not a string"))
-                };
+                let building_id =
+                    try!(msg.get("buildingId").ok_or("Missing \"buildingId\""));
+                let building_id =
+                    try!(building_id.as_i64().ok_or("\"buildingId\" is not an integer")) as i32;
+
+                let light_id =
+                    try!(msg.get("lightId").ok_or("Missing \"lightId\""));
+                let light_id =
+                    try!(light_id.as_i64().ok_or("\"lightId\" is not an integer")) as i32;
+
+                let color =
+                    try!(msg.get("color").ok_or("Missing \"color\""));
+                let color =
+                    try!(color.as_string().ok_or("\"color\" is not a string")).to_string();
+
                 Msg::SetLight {
                     building_id: building_id,
                     light_id: light_id,
