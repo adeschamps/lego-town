@@ -4,17 +4,16 @@ mod town;
 mod town_controller;
 include!(concat!(env!("OUT_DIR"), "/messages.rs"));
 
-#[macro_use]
-extern crate json;
-extern crate ws;
 extern crate protobuf;
+extern crate rustc_serialize;
+extern crate ws;
 
-use json::{JsonValue};
 use std::fs::File;
 use std::io::Read;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::sync::mpsc;
+use rustc_serialize::json::Json;
 
 fn main() {
     // Initialize town model
@@ -38,7 +37,7 @@ fn main() {
     };
 }
 
-fn load_init_data(filename: &str) -> JsonValue {
+fn load_init_data(filename: &str) -> Json {
     let mut f = match File::open(filename) {
         Err(why) => panic!("Couldn't open file: {}", why),
         Ok(file) => file
@@ -48,5 +47,5 @@ fn load_init_data(filename: &str) -> JsonValue {
         Err(why) => panic!("Failed to read file: {}", why),
         Ok(x) => x
     };
-    json::parse(s.as_ref()).unwrap()
+    Json::from_str(s.as_ref()).unwrap()
 }

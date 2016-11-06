@@ -1,13 +1,16 @@
 use client_api;
 use town;
 
+extern crate rustc_serialize;
 extern crate try_from;
-use client::try_from::TryFrom;
 extern crate ws;
+
+use client::try_from::TryFrom;
 use ws::{Error, Handler, Handshake, Message};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
-use json;
+use self::rustc_serialize::json::Json;
+use std::str::FromStr;
 
 
 pub struct Client {
@@ -50,7 +53,7 @@ impl Handler for Client {
         };
 
         println!("Received message: {}", msg);
-        let msg = match json::parse(&msg) {
+        let msg = match Json::from_str(&msg) {
             Ok(msg) => msg,
             Err(e) => {
                 println!("Failed to parse json: {}", e);

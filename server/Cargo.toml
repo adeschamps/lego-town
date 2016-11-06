@@ -8,6 +8,7 @@ build = "build.rs"
 json = "0.10.2"
 protobuf = "1.0.24"
 read_color = "0.1.0"
+rustc-serialize = "0.3"
 try_from = "0.2.0"
 ws = "0.5.3"
 
