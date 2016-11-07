@@ -21,16 +21,16 @@ impl try_from::TryFrom<Json> for Msg {
     fn try_from(msg: Json) -> Result<Self, Self::Err> {
         let msg = match msg.as_object() {
             Some(msg) => msg,
-            Nothing => return Err(format!("Message is not a JSON object."))
+            None => return Err(format!("Message is not a JSON object."))
         };
 
         let msg_type = match msg.get("type") {
             Some(t) => t,
-            Nothing => return Err(format!("Message doesn't contain a \"type\" field."))
+            None => return Err(format!("Message doesn't contain a \"type\" field."))
         };
         let msg_type = match msg_type.as_string() {
             Some(t) => t,
-            Nothing => return Err(format!("\"type\" field is not a string."))
+            None => return Err(format!("\"type\" field is not a string."))
         };
 
         let msg = match msg_type {
