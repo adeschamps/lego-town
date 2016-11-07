@@ -5,12 +5,12 @@ use rustc_serialize::hex::ToHex;
 
 #[derive(RustcDecodable, RustcEncodable)]
 pub struct Town {
-    buildings: Vec<Building>
+    pub buildings: Vec<Building>
 }
 
 #[derive(RustcDecodable, RustcEncodable)]
-struct Building {
-    name: String,
+pub struct Building {
+    pub name: String,
     lights: Vec<Light>
 }
 
