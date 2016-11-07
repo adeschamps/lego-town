@@ -7,12 +7,12 @@ use self::rustc_serialize::json::Json;
 pub enum Msg {
     Init,
     SetBuilding {
-        building_id: i32,
+        building_id: u8,
         color: String
     },
     SetLight {
-        building_id: i32,
-        light_id: i32,
+        building_id: u8,
+        light_id: u8,
         color: String
     }
 }

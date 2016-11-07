@@ -54,7 +54,7 @@ impl TownController {
                     col.set_red(color[0] as i32);
                     col.set_green(color[1] as i32);
                     col.set_blue(color[2] as i32);
-                    sg.set_light_group(building_id);
+                    sg.set_light_group(building_id as i32);
                     sg.set_color(col);
                     c.set_set_group(sg);
                     self.send(c);
