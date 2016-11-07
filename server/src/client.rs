@@ -5,12 +5,10 @@ extern crate rustc_serialize;
 extern crate try_from;
 extern crate ws;
 
-use client::try_from::TryFrom;
 use ws::{Error, Handler, Handshake, Message};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
 use self::rustc_serialize::json;
-use self::rustc_serialize::json::Json;
 
 pub struct Client {
     out: ws::Sender,

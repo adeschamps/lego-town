@@ -2,7 +2,6 @@ extern crate rustc_serialize;
 extern crate try_from;
 
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder, EncoderHelpers};
-use self::rustc_serialize::json::Json;
 
 #[derive(PartialEq, Debug)]
 pub enum Msg {
