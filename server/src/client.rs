@@ -60,18 +60,11 @@ impl Handler for Client {
         };
 
         println!("Received message: {}", msg);
-        let msg = match Json::from_str(&msg) {
-            Ok(msg) => msg,
-            Err(e) => {
-                println!("Failed to parse json: {}", e);
-                return Ok(())
-            }
-        };
 
-        let msg = match client_api::Msg::try_from(msg) {
+        let msg = match json::decode(msg) {
             Ok(msg) => msg,
             Err(e) => {
-                println!("Failed to convert json to message: {}", e);
+                println!("Failed to parse message: {}", e);
                 return Ok(())
             }
         };
