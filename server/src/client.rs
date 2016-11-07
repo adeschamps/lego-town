@@ -11,7 +11,6 @@ use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
 use self::rustc_serialize::json;
 use self::rustc_serialize::json::Json;
-use std::ops::Deref;
 
 pub struct Client {
     out: ws::Sender,
