@@ -4,6 +4,7 @@ extern crate try_from;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder, EncoderHelpers};
 use self::rustc_serialize::json::Json;
 
+#[derive(PartialEq, Debug)]
 pub enum Msg {
     Init,
     SetBuilding {
@@ -137,6 +138,37 @@ impl Encodable for Light {
 mod tests {
     use super::*;
     use rustc_serialize::json;
+
+    #[test]
+    fn decode_init() {
+        let msg = r##"{"type":"init"}"##;
+        let msg : Msg = json::decode(msg).unwrap();
+        let expected = Msg::Init;
+        assert_eq!(msg, expected);
+    }
+
+    #[test]
+    fn decode_set_building() {
+        let msg = r##"{"type":"setBuilding","buildingId":0,"color":"#ff0000"}"##;
+        let msg : Msg = json::decode(msg).unwrap();
+        let expected = Msg::SetBuilding{
+            building_id: 0,
+            color: "#ff0000".to_string()
+        };
+        assert_eq!(msg, expected);
+    }
+
+    #[test]
+    fn decode_set_light() {
+        let msg = r##"{"type":"setLight","buildingId":0,"lightId":1,"color":"#ff0000"}"##;
+        let msg : Msg = json::decode(msg).unwrap();
+        let expected = Msg::SetLight{
+            building_id: 0,
+            light_id: 1,
+            color: "#ff0000".to_string()
+        };
+        assert_eq!(msg, expected);
+    }
 
     #[test]
     fn encode_response_state() {
