@@ -1,11 +1,14 @@
 extern crate read_color;
 
-use json::{JsonValue};
+use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
+use rustc_serialize::hex::ToHex;
 
+#[derive(RustcDecodable, RustcEncodable)]
 pub struct Town {
     buildings: Vec<Building>
 }
 
+#[derive(RustcDecodable, RustcEncodable)]
 struct Building {
     name: String,
     lights: Vec<Light>
@@ -15,47 +18,24 @@ struct Light {
     color: [u8; 3]
 }
 
-impl Light {
-    // TODO: Replace this with actual colour.
-    fn color_as_hex_string(&self) -> String {
-        "#ffffff".to_string()
+impl Decodable for Light {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
+        d.read_struct("Light", 0, |d| {
+            d.read_struct_field("color", 0, D::read_str).and_then(|color| {
+                // TODO: Replace this with FromHex
+                read_color::rgb(color[1..].chars().by_ref())
+                    .ok_or(d.error("Failed to parse color"))
+            }).map(|color| {
+                Light{
+                    color: color
+                }
+            })
+        })
     }
 }
 
-impl Town  {
-    pub fn new(init_data: JsonValue) -> Result<Town, String> {
-        let buildings = match Town::init_buildings(init_data) {
-            Ok(buildings) => buildings,
-            Err(e) => return Err(e)
-        };
-        Ok(Town{
-            buildings: buildings
-        })
-    }
-
-    fn init_buildings(init_data: JsonValue) -> Result<Vec<Building>, String> {
-        Ok(
-            init_data["buildings"].members().map(|b| Building{
-                name: b["name"].to_string(),
-                lights: b["lights"].members().map(|l| Light{
-                    // TODO: Fix this horrible colour parsing
-                    color: read_color::rgb(l["color"].as_str().unwrap()[1..].chars().by_ref()).unwrap()
-                }).collect::<Vec<_>>()
-            }).collect::<Vec<_>>()
-        )
-    }
-
-    pub fn get_state(&self) -> JsonValue {
-        object!{
-            "type" => "initialize",
-            "buildings" => self.buildings.iter().enumerate().map(|(i, b)| object!{
-                "buildingId" => i,
-                "name" => b.name.to_string(),
-                "lights" => b.lights.iter().enumerate().map(|(i, l)| object!{
-                    "lightId" => i,
-                    "color" => l.color_as_hex_string()
-                }).collect::<Vec<_>>()
-            }).collect::<Vec<_>>()
-         }
+impl Encodable for Light {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        s.emit_str(format!("#{}", self.color.to_hex()).as_str())
     }
 }

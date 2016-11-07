@@ -9,9 +9,9 @@ use client::try_from::TryFrom;
 use ws::{Error, Handler, Handshake, Message};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
+use self::rustc_serialize::json;
 use self::rustc_serialize::json::Json;
-use std::str::FromStr;
-
+use std::ops::Deref;
 
 pub struct Client {
     out: ws::Sender,
@@ -32,7 +32,7 @@ impl Client {
 
     fn handle_init(&self) -> Result<(), ws::Error> {
         let town = self.town.lock().unwrap();
-        let state = town.get_state().dump();
+        let state = json::encode(town.deref()).unwrap();
         self.out.send(state)
     }
 }

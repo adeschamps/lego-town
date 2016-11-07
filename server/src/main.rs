@@ -8,17 +8,18 @@ extern crate protobuf;
 extern crate rustc_serialize;
 extern crate ws;
 
+use rustc_serialize::json;
 use std::fs::File;
 use std::io::Read;
+use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::sync::mpsc;
-use rustc_serialize::json::Json;
+use town::Town;
 
 fn main() {
     // Initialize town model
-    let init_data = load_init_data("init-data.json");
-    let town = town::Town::new(init_data).unwrap();
+    let town = construct_town("init-data.json");
+    println!("Initialized town: {}", json::as_pretty_json(&town));
     let town = Arc::new(Mutex::new(town));
 
     // Create town controller
@@ -33,19 +34,23 @@ fn main() {
         client::Client::new(out, town.clone(), tx.clone())
     }) {
         Ok(()) => {}
-        Err(why) => panic!("Failed to create WebSocket server: {}", why)
+        Err(e) => panic!("Failed to create WebSocket server: {}", e)
     };
 }
 
-fn load_init_data(filename: &str) -> Json {
+fn construct_town(filename: &str) -> Town {
     let mut f = match File::open(filename) {
-        Err(why) => panic!("Couldn't open file: {}", why),
+        Err(e) => panic!("Couldn't open file: {}", e),
         Ok(file) => file
     };
-    let mut s = String::new();
-    match f.read_to_string(&mut s) {
-        Err(why) => panic!("Failed to read file: {}", why),
+    let mut init_data = String::new();
+    match f.read_to_string(&mut init_data) {
+        Err(e) => panic!("Failed to read file: {}", e),
         Ok(x) => x
     };
-    Json::from_str(s.as_ref()).unwrap()
+    let town = match json::decode(init_data.as_str()) {
+        Err(e) => panic!("Failed to parse init data: {}", e),
+        Ok(town) => town
+    };
+    town
 }
