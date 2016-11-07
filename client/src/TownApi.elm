@@ -14,7 +14,7 @@ import Result exposing (fromMaybe)
 type alias BuildingId = Int
 
 type Msg
-    = Initialize (List BuildingInfo)
+    = State (List BuildingInfo)
     | SetLights BuildingId (List LightState)
 
 type alias BuildingInfo =
@@ -38,8 +38,8 @@ msg = ("type" := string) `andThen` subMsg
 subMsg : String -> Decoder Msg
 subMsg msgType =
     case msgType of
-        "initialize" ->
-            succeed Initialize
+        "state" ->
+            succeed State
                 |: ("buildings" := list buildingInfo)
         "setLights" ->
             succeed SetLights

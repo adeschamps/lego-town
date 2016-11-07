@@ -122,7 +122,7 @@ handleSettingsMsg msg model =
 handleTownServerMsg : TownApi.Msg -> Model -> (Model, Cmd Msg)
 handleTownServerMsg msg model =
     case msg of
-        TownApi.Initialize buildingInfo ->
+        TownApi.State buildingInfo ->
             let
                 town = model.town
                 newTown = { town | buildings = getBuildings buildingInfo }
