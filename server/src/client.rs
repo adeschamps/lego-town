@@ -32,8 +32,16 @@ impl Client {
 
     fn handle_init(&self) -> Result<(), ws::Error> {
         let town = self.town.lock().unwrap();
-        let state = json::encode(town.deref()).unwrap();
-        self.out.send(state)
+        let state = client_api::Response::State {
+            buildings: town.buildings.iter().enumerate().map(|(i, b)| client_api::Building {
+                name: b.name.clone(),
+                id: i as u8,
+                lights: Vec::new()
+            }).collect()
+        };
+        let msg = json::encode(&state).unwrap();
+        println!("state: {}", json::encode(&state).unwrap());
+        self.out.send(msg)
     }
 }
 
