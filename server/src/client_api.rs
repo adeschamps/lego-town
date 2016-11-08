@@ -4,7 +4,7 @@ use rustc_serialize::{Decodable, Decoder, Encodable, Encoder, EncoderHelpers};
 
 #[derive(PartialEq, Debug)]
 pub enum Msg {
-    Init,
+    GetState,
     SetBuilding {
         building_id: u8,
         color: String
@@ -22,8 +22,8 @@ impl Decodable for Msg {
         d.read_struct("Msg", 0, |d| {
             d.read_struct_field("type", 0, D::read_str).and_then(|msg_type| {
                 Ok(match msg_type.as_str() {
-                    "init" => {
-                        Msg::Init
+                    "getState" => {
+                        Msg::GetState
                     }
 
                     "setBuilding" => {
@@ -139,9 +139,9 @@ mod tests {
 
     #[test]
     fn decode_init() {
-        let msg = r##"{"type":"init"}"##;
+        let msg = r##"{"type":"getState"}"##;
         let msg : Msg = json::decode(msg).unwrap();
-        let expected = Msg::Init;
+        let expected = Msg::GetState;
         assert_eq!(msg, expected);
     }
 

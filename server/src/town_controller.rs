@@ -37,7 +37,7 @@ impl TownController {
             println!("Received command");
 
             match cmd {
-                client_api::Msg::Init => {}
+                client_api::Msg::GetState => {}
 
                 client_api::Msg::SetLight{..} => {
                     let mut c = messages::Command::new();
