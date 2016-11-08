@@ -7,7 +7,8 @@ extern crate ws;
 use ws::{Error, Handler, Handshake, Message};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc;
-use self::rustc_serialize::json;
+use rustc_serialize::json;
+use rustc_serialize::hex::ToHex;
 
 pub struct Client {
     out: ws::Sender,
@@ -59,7 +60,10 @@ impl Handler for Client {
                     buildings: town.buildings.iter().enumerate().map(|(i,b)| client_api::Building {
                         name: b.name.clone(),
                         id: i as u8,
-                        lights: Vec::new()
+                        lights: b.lights.iter().enumerate().map(|(i,l)| client_api::Light {
+                            id: i as u8,
+                            color: format!("#{}", l.color.to_hex())
+                        }).collect()
                     }).collect()
                 })
             }

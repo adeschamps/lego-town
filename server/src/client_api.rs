@@ -73,8 +73,8 @@ pub struct Building {
 }
 
 pub struct Light {
-    id: u8,
-    color: String
+    pub id: u8,
+    pub color: String
 }
 
 impl Encodable for Response {

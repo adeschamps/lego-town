@@ -11,12 +11,12 @@ pub struct Town {
 #[derive(Debug, PartialEq, RustcDecodable, RustcEncodable)]
 pub struct Building {
     pub name: String,
-    lights: Vec<Light>
+    pub lights: Vec<Light>
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Light {
-    color: [u8; 3]
+    pub color: [u8; 3]
 }
 
 impl Decodable for Light {
