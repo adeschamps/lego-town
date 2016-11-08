@@ -74,40 +74,40 @@ viewBuilding index model town buildingId =
         Just building ->
             let
                 style = buildingStyle building.name
+                expandButton =
+                    Button.render Mdl (0::index) model.mdl
+                        [ Button.icon
+                        , Button.ripple
+                        ]
+                        [ Icon.i "expand_more" ]
             in
                 Card.view
                     [ Color.background (Color.color style.hue Color.S500)
                     ]
                     [ Card.title [] [ Card.head [ Color.text Color.white ] [ text building.name ] ]
+                    , Card.menu [] [ expandButton ]
                     , Card.text [ Card.expand ] [] -- filler
                     , Card.actions []
-                        <| List.indexedMap (\i color -> viewColorButton (i::index) model color (SetBuilding buildingId)) lightColors
-            {-
-                          [ Button.render Mdl (0::index) model.mdl
-                                [ Button.icon, Button.ripple
-                                , Color.text Color.white
-                                , Color.background Color.white
-                                , Button.onClick <| SetBuilding buildingId StdColor.white
-                                ]
-                                [ Icon.i "lightbulb_outline" ]
-                          ]
-             -}
+                        <| selectColorList (1::index) model.mdl (SetBuilding buildingId)
                     ]
 
-viewColorButton : Index -> Model -> StdColor.Color -> (StdColor.Color -> Msg) -> Html Msg
-viewColorButton index model color onClick =
-    Button.render Mdl (0::index) model.mdl
-        [ Button.icon
-        , Button.ripple
---        , Color.text color
-        , Color.background Color.white
-        , Button.onClick <| onClick color
-        ]
-        [ Icon.i "lightbulb_outline" ]
+selectColorList : Index -> Material.Model -> (StdColor.Color -> Msg) -> List (Html Msg)
+selectColorList index mdl onClick =
+    let
+        makeButton i color =
+            Button.render Mdl (i::index) mdl
+                [ Button.icon
+                , Button.ripple
+                , Color.background Color.white
+                , Button.onClick <| onClick color
+                ]
+            [ Icon.i "lightbulb_outline" ]
+    in
+        lightColors |> List.indexedMap makeButton
 
 lightColors : List StdColor.Color
 lightColors =
-    [1..11]
+    [0..5]
         |> List.map (\d -> d * 30 |> degrees)
         |> takeWhile (\h -> h < 360)
         |> List.map (\h -> hsl h 1.0 0.5)
