@@ -76,7 +76,7 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         Synchronize ->
-            { model | syncing = True } ! [townServerCmd model TownApi.init]
+            { model | syncing = True } ! [townServerCmd model TownApi.getState]
 
         UpdateTownPage msg' ->
             TownPage.update model msg' model.townPage
@@ -113,7 +113,7 @@ handleSettingsMsg msg model =
         case msg of
             SettingsPage.SetTownUrl url ->
                 let settings = {settings | townUrl = url}
-                in {model | settings = settings} ! [townServerCmd model TownApi.init]
+                in {model | settings = settings} ! [townServerCmd model TownApi.getState]
             SettingsPage.SetArduinoUrl url ->
                 let settings = {settings | arduinoUrl = url}
                 in {model | settings = settings} ! []

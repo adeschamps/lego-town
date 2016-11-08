@@ -73,10 +73,10 @@ color =
 -- maybe something like MessageType?
 type alias Type = Value
 
-init : Value
-init =
+getState : Value
+getState =
     Enc.object
-        [ ("type", Enc.string "init")
+        [ ("type", Enc.string "getState")
         ]
 
 setBuilding : Int -> Color -> Value
