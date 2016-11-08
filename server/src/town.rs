@@ -3,18 +3,19 @@ extern crate read_color;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use rustc_serialize::hex::ToHex;
 
-#[derive(RustcDecodable, RustcEncodable)]
+#[derive(Debug, PartialEq, RustcDecodable, RustcEncodable)]
 pub struct Town {
     pub buildings: Vec<Building>
 }
 
-#[derive(RustcDecodable, RustcEncodable)]
+#[derive(Debug, PartialEq, RustcDecodable, RustcEncodable)]
 pub struct Building {
     pub name: String,
     lights: Vec<Light>
 }
 
-struct Light {
+#[derive(Debug, PartialEq)]
+pub struct Light {
     color: [u8; 3]
 }
 
@@ -37,5 +38,34 @@ impl Decodable for Light {
 impl Encodable for Light {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
         s.emit_str(format!("#{}", self.color.to_hex()).as_str())
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rustc_serialize::json;
+
+    #[test]
+    fn decode_town() {
+        let light = format!("{{\"color\":\"#ff0000\"}}");
+        let cafe_corner = format!("{{\"name\":\"Cafe Corner\", \"lights\": [{}, {}]}}", light, light);
+        let init_data = format!("{{\"buildings\":[{}]}}", cafe_corner);
+
+        let town : Town = json::decode(init_data.as_str()).unwrap();
+        let expected = Town {
+            buildings: vec![
+                Building {
+                    name: "Cafe Corner".to_string(),
+                    lights: vec![
+                        Light { color: [255, 0, 0] },
+                        Light { color: [255, 0, 0] }
+                    ]
+                }
+            ]
+        };
+        assert_eq!(town, expected);
     }
 }
