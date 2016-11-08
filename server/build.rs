@@ -27,7 +27,7 @@ fn main() {
     };
     let mut reader = BufReader::new(&file);
     let buffer_string = &mut String::new();
-    reader.read_to_string(buffer_string);
+    reader.read_to_string(buffer_string).unwrap();
     let mut options = OpenOptions::new();
     options.write(true);
     let file = match options.open(&file_path) {
@@ -36,5 +36,5 @@ fn main() {
     };
     let mut writer = BufWriter::new(&file);
     // writer.write_fmt(buffer_string);
-    write!(writer, "pub mod messages {{\n{}\n}}", buffer_string);
+    write!(writer, "pub mod messages {{\n{}\n}}", buffer_string).unwrap();
 }
