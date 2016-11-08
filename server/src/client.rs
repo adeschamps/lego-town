@@ -25,20 +25,6 @@ impl Client {
             town_command: town_command
         }
     }
-
-    fn handle_init(&self) -> Result<(), ws::Error> {
-        let town = self.town.lock().unwrap();
-        let state = client_api::Response::State {
-            buildings: town.buildings.iter().enumerate().map(|(i, b)| client_api::Building {
-                name: b.name.clone(),
-                id: i as u8,
-                lights: Vec::new()
-            }).collect()
-        };
-        let msg = json::encode(&state).unwrap();
-        println!("state: {}", json::encode(&state).unwrap());
-        self.out.send(msg)
-    }
 }
 
 impl Handler for Client {
@@ -66,20 +52,38 @@ impl Handler for Client {
             }
         };
 
-        match msg {
-            client_api::Msg::Init => {
-                self.handle_init()
+        let response = match msg {
+            client_api::Msg::GetState => {
+                let town = self.town.lock().unwrap();
+                Some(client_api::Response::State {
+                    buildings: town.buildings.iter().enumerate().map(|(i,b)| client_api::Building {
+                        name: b.name.clone(),
+                        id: i as u8,
+                        lights: Vec::new()
+                    }).collect()
+                })
             }
 
             client_api::Msg::SetBuilding{..} => {
-                self.town_command.send(msg);
-                Ok(())
+                None
             }
 
             client_api::Msg::SetLight{..} => {
-                self.town_command.send(msg);
-                Ok(())
+                None
             }
+        };
+
+        self.town_command.send(msg).unwrap_or_else(|e| {
+            println!("Failed to send command to town controller: {}", e)
+        });
+
+        match response {
+            Some(response) => {
+                let response = json::encode(&response).unwrap();
+                println!("Sending response: {}", response);
+                self.out.send(response)
+            }
+            None => Ok(())
         }
     }
 
