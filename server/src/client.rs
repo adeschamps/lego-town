@@ -2,7 +2,6 @@ use client_api;
 use town;
 
 extern crate rustc_serialize;
-extern crate try_from;
 extern crate ws;
 
 use ws::{Error, Handler, Handshake, Message};

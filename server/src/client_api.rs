@@ -1,5 +1,4 @@
 extern crate rustc_serialize;
-extern crate try_from;
 
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder, EncoderHelpers};
 
