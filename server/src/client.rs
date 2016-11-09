@@ -6,7 +6,6 @@ extern crate ws;
 use ws::{Error, Handler, Handshake, Message};
 use std::sync::mpsc;
 use rustc_serialize::json;
-use rustc_serialize::hex::ToHex;
 
 pub struct Client {
     out: ws::Sender,
