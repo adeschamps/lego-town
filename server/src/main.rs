@@ -12,7 +12,6 @@ use rustc_serialize::json;
 use std::fs::File;
 use std::io::Read;
 use std::sync::mpsc;
-use std::sync::{Arc, Mutex};
 use std::thread;
 use town::Town;
 
@@ -20,18 +19,17 @@ fn main() {
     // Initialize town model
     let town = construct_town("init-data.json");
     println!("Initialized town: {}", json::as_pretty_json(&town));
-    let town = Arc::new(Mutex::new(town));
 
     // Create town controller
     let (tx, rx) = mpsc::channel();
     let arduino_addr = "127.0.0.1:12345";
-    let town_controller = town_controller::TownController::new(arduino_addr, town.clone(), rx);
+    let town_controller = town_controller::TownController::new(arduino_addr, town, rx);
     thread::spawn(move || town_controller.run());
 
     // Listen for websocket connections
     println!("Listening for clients...");
     match ws::listen("0.0.0.0:1234", |out| {
-        client::Client::new(out, town.clone(), tx.clone())
+        client::Client::new(out, tx.clone())
     }) {
         Ok(()) => {}
         Err(e) => panic!("Failed to create WebSocket server: {}", e)
