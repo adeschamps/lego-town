@@ -41,29 +41,31 @@ impl TownController {
 
             match cmd {
                 client_api::Msg::GetState => {
-                    let response = client_api::Response::State{
-                        buildings: self.town.buildings.iter().enumerate().map(|(i,b)| client_api::Building {
-                            name: b.name.clone(),
-                            id: i as u8,
-                            lights: b.lights.iter().enumerate().map(|(i,l)| client_api::Light {
-                                id: i as u8,
-                                color: format!("#{}", l.color.to_hex())
-                            }).collect()
-                        }).collect()
-                    };
+                    let response = self.get_state();
                     let response = json::encode(&response).unwrap();
                     out.send(response).unwrap();
                 }
 
-                client_api::Msg::SetLight{..} => {
-                    let mut c = messages::Command::new();
+                client_api::Msg::SetLight{building_id, light_id, color} => {
+                    let mut cmd = messages::Command::new();
                     let mut sl = messages::SetLight::new();
-                    c.set_set_light(sl);
-                    self.send(c);
-                    println!("Set light")
+                    let mut col = messages::Color::new();
+                    let color = read_color::rgb(color.as_str()[1..].chars().by_ref()).unwrap();
+                    col.set_red(color[0] as i32);
+                    col.set_green(color[1] as i32);
+                    col.set_blue(color[2] as i32);
+                    sl.set_light_group(building_id as i32);
+                    sl.set_light_id(light_id as i32);
+                    sl.set_color(col);
+                    cmd.set_set_light(sl);
+                    self.send_arduino_command(cmd);
+
+                    let response = self.get_state();
+                    let response = json::encode(&response).unwrap();
+                    out.broadcast(response).unwrap();
                 },
                 client_api::Msg::SetBuilding{building_id, color} => {
-                    let mut c = messages::Command::new();
+                    let mut cmd = messages::Command::new();
                     let mut sg = messages::SetGroup::new();
                     let mut col = messages::Color::new();
                     let color = read_color::rgb(color.as_str()[1..].chars().by_ref()).unwrap();
@@ -72,18 +74,37 @@ impl TownController {
                     col.set_blue(color[2] as i32);
                     sg.set_light_group(building_id as i32);
                     sg.set_color(col);
-                    c.set_set_group(sg);
-                    self.send(c);
-                    println!("Set Building")
+                    cmd.set_set_group(sg);
+                    self.send_arduino_command(cmd);
+
+                    let response = self.get_state();
+                    let response = json::encode(&response).unwrap();
+                    out.broadcast(response).unwrap();
                 }
             };
         }
     }
 
-    fn send<M: Message>(&self, msg: M) {
+    fn send_arduino_command<M: Message>(&self, msg: M) {
         let msg = msg.write_to_bytes().unwrap();
         let msg = msg.as_slice();
         println!("Sending msg: {:?}", msg);
-        self.arduino_socket.send_to(msg, self.arduino_addr);
+        match self.arduino_socket.send_to(msg, self.arduino_addr) {
+            Ok(_) => {}
+            Err(e) => println!("Failed to send arduino message: {}", e)
+        }
+    }
+
+    fn get_state(&self) -> client_api::Response {
+        client_api::Response::State{
+            buildings: self.town.buildings.iter().enumerate().map(|(i,b)| client_api::Building {
+                name: b.name.clone(),
+                id: i as u8,
+                lights: b.lights.iter().enumerate().map(|(i,l)| client_api::Light {
+                    id: i as u8,
+                    color: format!("#{}", l.color.to_hex())
+                }).collect()
+            }).collect()
+        }
     }
 }
