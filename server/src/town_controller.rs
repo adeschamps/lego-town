@@ -5,7 +5,6 @@ use town;
 use messages;
 
 extern crate ws;
-
 use protobuf::Message;
 use rustc_serialize::hex::ToHex;
 use rustc_serialize::json;
@@ -36,6 +35,8 @@ impl TownController {
 
     pub fn run(&self) {
         println!("Running town controller.");
+        self.initialize_arduino();
+
         for (cmd, out) in self.commands.iter() {
             println!("Received command: {:?}", cmd);
 
@@ -63,7 +64,8 @@ impl TownController {
                     let response = self.get_state();
                     let response = json::encode(&response).unwrap();
                     out.broadcast(response).unwrap();
-                },
+                }
+
                 client_api::Msg::SetBuilding{building_id, color} => {
                     let mut cmd = messages::Command::new();
                     let mut sg = messages::SetGroup::new();
@@ -92,6 +94,28 @@ impl TownController {
         match self.arduino_socket.send_to(msg, self.arduino_addr) {
             Ok(_) => {}
             Err(e) => println!("Failed to send arduino message: {}", e)
+        }
+    }
+
+    /// Sets each light individually to match the current model.
+    /// This sends one packet per light.
+    fn initialize_arduino(&self) {
+        for (building_id, building) in self.town.buildings.iter().enumerate() {
+            for (light_id, light) in building.lights.iter().enumerate() {
+
+                let mut cmd = messages::Command::new();
+                let mut sl = messages::SetLight::new();
+                let mut col = messages::Color::new();
+                col.set_red(light.color[0] as i32);
+                col.set_green(light.color[1] as i32);
+                col.set_blue(light.color[2] as i32);
+                sl.set_light_group(building_id as i32);
+                sl.set_light_id(light_id as i32);
+                sl.set_color(col);
+                cmd.set_set_light(sl);
+
+                self.send_arduino_command(cmd);
+            }
         }
     }
 
