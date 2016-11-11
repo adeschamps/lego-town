@@ -16,7 +16,7 @@ import Result exposing (fromMaybe)
 type alias BuildingId = Int
 
 type Msg
-    = State (List BuildingInfo)
+    = State Erl.Url (List BuildingInfo)
     | SetLights BuildingId (List LightState)
 
 type alias BuildingInfo =
@@ -42,6 +42,7 @@ subMsg msgType =
     case msgType of
         "state" ->
             succeed State
+                |: ("arduinoAddress" := url)
                 |: ("buildings" := list buildingInfo)
         "setLights" ->
             succeed SetLights
@@ -68,6 +69,13 @@ color =
         decodeColor c = hexToColor c |>  fromMaybe ("Invalid color: " ++ c)
     in
         customDecoder string decodeColor
+
+url : Decoder Erl.Url
+url =
+    let
+        decodeUrl url = Erl.parse url
+    in
+        customDecoder string (decodeUrl >> Ok)
 
 -- OUTGOING MESSAGES
 

@@ -122,7 +122,7 @@ handleSettingsMsg msg model =
 handleTownServerMsg : TownApi.Msg -> Model -> (Model, Cmd Msg)
 handleTownServerMsg msg model =
     case msg of
-        TownApi.State buildingInfo ->
+        TownApi.State arduinoUrl buildingInfo ->
             let
                 town = model.town
                 newTown = { town | buildings = getBuildings buildingInfo }
@@ -132,8 +132,11 @@ handleTownServerMsg msg model =
 
                 getLights = Dict.fromList << List.map lightKeyValue
                 lightKeyValue l = ( l.lightId , l.color )
+
+                settings = model.settings
+                newSettings = { settings | arduinoUrl = arduinoUrl }
             in
-                { model | town = newTown } ! []
+                { model | town = newTown , settings = newSettings } ! []
 
         TownApi.SetLights buildingId lights -> model ! []
 
