@@ -83,6 +83,7 @@ impl Decodable for Msg {
 
 pub enum Response {
     State {
+        arduino_address: String,
         buildings: Vec<Building>
     }
 }
@@ -101,12 +102,15 @@ pub struct Light {
 impl Encodable for Response {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
         match *self {
-            Response::State{ref buildings} => {
+            Response::State{ref arduino_address, ref buildings} => {
                 s.emit_struct("State", 1, |s| {
                     try!(s.emit_struct_field("type", 0, |s| {
                         s.emit_str("state")
                     }));
-                    try!(s.emit_struct_field("buildings", 1, |s| {
+                    try!(s.emit_struct_field("arduinoAddress", 1, |s| {
+                        s.emit_str(arduino_address)
+                    }));
+                    try!(s.emit_struct_field("buildings", 2, |s| {
                         s.emit_from_vec(&buildings, |s, b| {
                             b.encode(s)
                         })
@@ -192,10 +196,11 @@ mod tests {
     #[test]
     fn encode_response_state() {
         let state = Response::State {
+            arduino_address: "127.0.0.1:12345".to_string(),
             buildings: Vec::new()
         };
         let state = json::encode(&state).unwrap();
-        let expected = r##"{"type":"state","buildings":[]}"##;
+        let expected = r##"{"type":"state","arduinoAddress":"127.0.0.1:12345","buildings":[]}"##;
         assert_eq!(state, expected);
     }
 

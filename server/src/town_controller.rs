@@ -85,6 +85,9 @@ impl TownController {
 
                 client_api::Msg::SetArduinoAddress{address} => {
                     self.arduino_addr = address;
+                    let response = self.get_state();
+                    let response = json::encode(&response).unwrap();
+                    out.broadcast(response).unwrap();
                 }
             };
         }
@@ -124,6 +127,7 @@ impl TownController {
 
     fn get_state(&self) -> client_api::Response {
         client_api::Response::State{
+            arduino_address: self.arduino_addr.to_string(),
             buildings: self.town.buildings.iter().enumerate().map(|(i,b)| client_api::Building {
                 name: b.name.clone(),
                 id: i as u8,
