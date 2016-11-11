@@ -1,18 +1,25 @@
 extern crate rustc_serialize;
 
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder, EncoderHelpers};
+use std::net::{SocketAddr, ToSocketAddrs};
 
 #[derive(PartialEq, Debug)]
 pub enum Msg {
     GetState,
+
     SetBuilding {
         building_id: u8,
         color: String
     },
+
     SetLight {
         building_id: u8,
         light_id: u8,
         color: String
+    },
+
+    SetArduinoAddress {
+        address: SocketAddr
     }
 }
 
@@ -48,6 +55,20 @@ impl Decodable for Msg {
                             building_id: building_id,
                             light_id: light_id,
                             color: color
+                        }
+                    }
+
+                    "setArduinoAddress" => {
+                        let address =
+                            try!(d.read_struct_field("address", 0, D::read_str));
+                        let mut address =
+                            try!(address.to_socket_addrs()
+                                 .map_err(|e| d.error(format!("Failed to parse address: {}", e).as_str())));
+                        let address =
+                            try!(address.next().ok_or(d.error("no parse")));
+
+                        Msg::SetArduinoAddress {
+                            address: address
                         }
                     }
 

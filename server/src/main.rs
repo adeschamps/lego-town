@@ -11,6 +11,7 @@ extern crate ws;
 use rustc_serialize::json;
 use std::fs::File;
 use std::io::Read;
+use std::net::{ToSocketAddrs};
 use std::sync::mpsc;
 use std::thread;
 use town::Town;
@@ -22,8 +23,8 @@ fn main() {
 
     // Create town controller
     let (tx, rx) = mpsc::channel();
-    let arduino_addr = "127.0.0.1:12345";
-    let town_controller = town_controller::TownController::new(arduino_addr, town, rx);
+    let arduino_addr = "127.0.0.1:12345".to_string().to_socket_addrs().unwrap().next().unwrap();
+    let mut town_controller = town_controller::TownController::new(arduino_addr, town, rx);
     thread::spawn(move || town_controller.run());
 
     // Listen for websocket connections

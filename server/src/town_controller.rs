@@ -8,7 +8,7 @@ extern crate ws;
 use protobuf::Message;
 use rustc_serialize::hex::ToHex;
 use rustc_serialize::json;
-use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
+use std::net::{SocketAddr, UdpSocket};
 use std::sync::mpsc;
 
 pub struct TownController {
@@ -19,21 +19,20 @@ pub struct TownController {
 }
 
 impl TownController {
-    pub fn new<A: ToSocketAddrs>(arduino_addr: A,
-                                 town: town::Town,
-                                 commands: mpsc::Receiver<(client_api::Msg, ws::Sender)>
-                                ) -> TownController {
+    pub fn new(arduino_addr: SocketAddr,
+               town: town::Town,
+               commands: mpsc::Receiver<(client_api::Msg, ws::Sender)>
+              ) -> TownController {
         let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
-        let addr = arduino_addr.to_socket_addrs().unwrap().next().unwrap();
         TownController {
             arduino_socket: socket,
-            arduino_addr: addr,
+            arduino_addr: arduino_addr,
             town: town,
             commands: commands
         }
     }
 
-    pub fn run(&self) {
+    pub fn run(&mut self) {
         println!("Running town controller.");
         self.initialize_arduino();
 
@@ -82,6 +81,10 @@ impl TownController {
                     let response = self.get_state();
                     let response = json::encode(&response).unwrap();
                     out.broadcast(response).unwrap();
+                }
+
+                client_api::Msg::SetArduinoAddress{address} => {
+                    self.arduino_addr = address;
                 }
             };
         }
