@@ -116,7 +116,7 @@ handleSettingsMsg msg model =
                 in {model | settings = settings} ! [townServerCmd model TownApi.getState]
             SettingsPage.SetArduinoUrl url ->
                 let settings = {settings | arduinoUrl = url}
-                in {model | settings = settings} ! []
+                in {model | settings = settings} ! [townServerCmd model <| TownApi.setArduinoAddress url]
 
 
 handleTownServerMsg : TownApi.Msg -> Model -> (Model, Cmd Msg)

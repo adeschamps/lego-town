@@ -3,6 +3,8 @@ module TownApi exposing (..)
 import Color exposing (Color)
 import Color.Convert exposing (..)
 
+import Erl
+
 import Json.Encode as Enc
 import Json.Decode exposing (..)
 import Json.Decode.Extra exposing (..)
@@ -93,6 +95,13 @@ setLight buildingId lightId color =
         , ("buildingId", Enc.int buildingId)
         , ("lightId",    Enc.int lightId)
         , ("color",      encColor color)
+        ]
+
+setArduinoAddress : Erl.Url -> Value
+setArduinoAddress address =
+    Enc.object
+        [ ("type",    Enc.string "setArduinoAddress")
+        , ("address", Enc.string <| Erl.toString address)
         ]
 
 encColor : Color -> Value
