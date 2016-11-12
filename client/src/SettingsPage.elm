@@ -14,7 +14,7 @@ import Parts exposing (Index)
 
 import String exposing (..)
 
-import Settings exposing (Settings)
+import Settings
 
 -- MODEL
 
@@ -26,7 +26,7 @@ type alias Model =
     , mdl : Material.Model
     }
 
-init : Settings -> Model
+init : Settings.Model -> Model
 init settings =
     { townUrl = Erl.toString settings.townUrl
     , arduinoUrl = Erl.toString settings.arduinoUrl
@@ -36,8 +36,7 @@ init settings =
 -- UPDATE
 
 type Msg
-    = CommitTownServer
-    | UpdateTown String
+    = UpdateTown String
     | CommitTown
     | UpdateArduino String
     | CommitArduino
@@ -50,22 +49,27 @@ type OutMsg
 update : Msg -> Model -> (Model, Cmd Msg, Maybe OutMsg)
 update msg model =
     case msg of
-        CommitTownServer -> (model, Cmd.none, Nothing)
+        UpdateTown url ->
+            ({ model | townUrl = url }, Cmd.none, Nothing)
 
-        UpdateTown url -> ({ model | townUrl = url }, Cmd.none, Nothing)
+        CommitTown ->
+            (model, Cmd.none, Just <| SetTownUrl <| Erl.parse model.townUrl)
 
-        CommitTown -> (model, Cmd.none, Just <| SetTownUrl <| Erl.parse model.townUrl)
+        UpdateArduino url ->
+            ({ model | arduinoUrl = url }, Cmd.none, Nothing)
 
-        UpdateArduino url -> ({ model | arduinoUrl = url }, Cmd.none, Nothing)
+        CommitArduino ->
+            (model, Cmd.none, Just <| SetArduinoUrl <| Erl.parse model.arduinoUrl)
 
-        CommitArduino -> (model, Cmd.none, Just <| SetArduinoUrl <| Erl.parse model.arduinoUrl)
-
-        Mdl msg' -> let (model, cmd) = Material.update msg' model
-                    in (model, cmd, Nothing)
+        Mdl msg' ->
+            let
+                (model, cmd) = Material.update msg' model
+            in
+                (model, cmd, Nothing)
 
 -- VIEW
 
-view : Model -> Settings -> Html Msg
+view : Model -> Settings.Model -> Html Msg
 view model settings =
     Options.div []
         [ Layout.title [] [ text "Settings" ]
@@ -79,7 +83,7 @@ type alias SettingInfo =
     , commit : Msg
     }
 
-settingInfo : Model -> Settings -> List SettingInfo
+settingInfo : Model -> Settings.Model -> List SettingInfo
 settingInfo model settings =
     [ { label = "Server: " ++ Erl.toString settings.townUrl
       , value = model.townUrl
@@ -93,7 +97,7 @@ settingInfo model settings =
       }
     ]
 
-viewSettings : Index -> Model -> Settings -> Html Msg
+viewSettings : Index -> Model -> Settings.Model -> Html Msg
 viewSettings index model settings =
     let
         viewSetting i info =

@@ -23,10 +23,10 @@ import WebSocket
 
 -- LOCAL MODULES
 
-import Settings exposing (Settings)
+import Settings
 import SettingsPage
 
-import Town exposing (Town)
+import Town
 
 import TownApi
 
@@ -37,11 +37,12 @@ import TownPage
 type alias Mdl = Material.Model
 
 type alias Model =
-    { townPage : TownPage.Model
+    { town : Town.Model
+    , settings : Settings.Model
+    -- PAGES
+    , townPage : TownPage.Model
     , settingsPage : SettingsPage.Model
-    , town : Town
-    , settings : Settings
-    , syncing : Bool
+    -- STATE
     , errorMsg : String
     , mdl : Material.Model
     }
@@ -49,16 +50,13 @@ type alias Model =
 init : Model
 init =
     let
-        settings = Settings.init
         town = Town.init
+        settings = Settings.init
     in
         { town = town
         , settings = settings
-        -- PAGES
         , townPage = TownPage.init town
         , settingsPage = SettingsPage.init settings
-        -- STATE
-        , syncing = False
         , errorMsg = ""
         , mdl = Material.model
     }
@@ -76,10 +74,10 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         Synchronize ->
-            { model | syncing = True } ! [townServerCmd model TownApi.getState]
+            model ! [townServerCmd model TownApi.getState]
 
         UpdateTownPage msg' ->
-            TownPage.update model msg' model.townPage
+            TownPage.update msg' model.townPage
                 |> OutMessage.mapComponent
                    (\newTownPage -> { model | townPage = newTownPage } )
                 |> OutMessage.mapCmd UpdateTownPage
@@ -108,7 +106,8 @@ handleTownMsg msg model =
 
 handleSettingsMsg : SettingsPage.OutMsg -> Model -> (Model, Cmd Msg)
 handleSettingsMsg msg model =
-    let settings = model.settings
+    let
+        settings = model.settings
     in
         case msg of
             SettingsPage.SetTownUrl url ->

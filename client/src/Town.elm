@@ -3,7 +3,7 @@ module Town exposing (..)
 import Color exposing (Color)
 import Dict exposing (Dict)
 
-type alias Town =
+type alias Model =
     { buildings : Dict Int Building
     }
 
@@ -18,19 +18,7 @@ genericBuilding =
     , lights = Dict.empty
     }
 
-cafeCorner : Building
-cafeCorner =
-    { name = "Cafe Corner"
-    , lights = Dict.empty
-    }
-
-greenGrocer : Building
-greenGrocer =
-    { name = "Green Grocer"
-    , lights = Dict.empty
-    }
-
-init : Town
+init : Model
 init =
     { buildings = Dict.empty
     |> Dict.insert 0 genericBuilding
