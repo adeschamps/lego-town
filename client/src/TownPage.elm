@@ -1,24 +1,15 @@
 module TownPage exposing (..)
 
 import Color as StdColor exposing (hsl)
-import Color.Convert exposing (colorToHex)
 
 import Dict
 
 import Html exposing (..)
 import Html.App
-import Html.Attributes exposing (style)
 
 import List.Extra as List exposing (takeWhile)
 
 import Material
-import Material.Button as Button
-import Material.Card as Card
-import Material.Color as Color
-import Material.Elevation as Elevation
-import Material.Grid as Grid exposing (grid, cell, size)
-import Material.Icon as Icon
-import Material.Layout as Layout
 import Material.Options as Options
 
 import OutMessage
