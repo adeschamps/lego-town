@@ -34,41 +34,32 @@ impl Decodable for Msg {
                     }
 
                     "setBuilding" => {
-                        let building_id =
-                            try!(d.read_struct_field("buildingId", 0, D::read_u8));
-                        let color =
-                            try!(d.read_struct_field("color", 1, D::read_str));
                         Msg::SetBuilding {
-                            building_id: building_id,
-                            color: color
+                            building_id:
+                                d.read_struct_field("buildingId", 0, D::read_u8)?,
+                            color:
+                                d.read_struct_field("color", 1, D::read_str)?
                         }
                     }
 
                     "setLight" => {
-                        let building_id =
-                            try!(d.read_struct_field("buildingId", 0, D::read_u8));
-                        let light_id =
-                            try!(d.read_struct_field("lightId", 1, D::read_u8));
-                        let color =
-                            try!(d.read_struct_field("color", 2, D::read_str));
                         Msg::SetLight {
-                            building_id: building_id,
-                            light_id: light_id,
-                            color: color
+                            building_id:
+                                d.read_struct_field("buildingId", 0, D::read_u8)?,
+                            light_id:
+                                d.read_struct_field("lightId", 1, D::read_u8)?,
+                            color:
+                                d.read_struct_field("color", 2, D::read_str)?
                         }
                     }
 
                     "setArduinoAddress" => {
-                        let address =
-                            try!(d.read_struct_field("address", 0, D::read_str));
-                        let mut address =
-                            try!(address.to_socket_addrs()
-                                 .map_err(|e| d.error(format!("Failed to parse address: {}", e).as_str())));
-                        let address =
-                            try!(address.next().ok_or(d.error("no parse")));
-
                         Msg::SetArduinoAddress {
-                            address: address
+                            address:
+                                d.read_struct_field("address", 0, D::read_str)?
+                                .to_socket_addrs()
+                                .map_err(|e| d.error(format!("Failed to parse address: {}", e).as_str()))?
+                                .next().ok_or(d.error("No address was parsed"))?
                         }
                     }
 
@@ -104,17 +95,17 @@ impl Encodable for Response {
         match *self {
             Response::State{ref arduino_address, ref buildings} => {
                 s.emit_struct("State", 1, |s| {
-                    try!(s.emit_struct_field("type", 0, |s| {
+                    s.emit_struct_field("type", 0, |s| {
                         s.emit_str("state")
-                    }));
-                    try!(s.emit_struct_field("arduinoAddress", 1, |s| {
+                    })?;
+                    s.emit_struct_field("arduinoAddress", 1, |s| {
                         s.emit_str(arduino_address)
-                    }));
-                    try!(s.emit_struct_field("buildings", 2, |s| {
+                    })?;
+                    s.emit_struct_field("buildings", 2, |s| {
                         s.emit_from_vec(&buildings, |s, b| {
                             b.encode(s)
                         })
-                    }));
+                    })?;
                     Ok(())
                 })
             }
@@ -125,17 +116,17 @@ impl Encodable for Response {
 impl Encodable for Building {
     fn encode<S:Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
         s.emit_struct("Building", 3, |s| {
-            try!(s.emit_struct_field("name", 0, |s| {
+            s.emit_struct_field("name", 0, |s| {
                 s.emit_str(self.name.as_str())
-            }));
-            try!(s.emit_struct_field("buildingId", 1, |s| {
+            })?;
+            s.emit_struct_field("buildingId", 1, |s| {
                 s.emit_u8(self.id)
-            }));
-            try!(s.emit_struct_field("lights", 2, |s| {
+            })?;
+            s.emit_struct_field("lights", 2, |s| {
                 s.emit_from_vec(&self.lights, |s, l| {
                     l.encode(s)
                 })
-            }));
+            })?;
             Ok(())
         })
     }
@@ -144,12 +135,12 @@ impl Encodable for Building {
 impl Encodable for Light {
     fn encode<S:Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
         s.emit_struct("Light", 2, |s| {
-            try!(s.emit_struct_field("lightId", 0, |s| {
+            s.emit_struct_field("lightId", 0, |s| {
                 s.emit_u8(self.id)
-            }));
-            try!(s.emit_struct_field("color", 1, |s| {
+            })?;
+            s.emit_struct_field("color", 1, |s| {
                 s.emit_str(self.color.as_str())
-            }));
+            })?;
             Ok(())
         })
     }
@@ -161,6 +152,7 @@ impl Encodable for Light {
 mod tests {
     use super::*;
     use rustc_serialize::json;
+    use std::net::{ToSocketAddrs};
 
     #[test]
     fn decode_init() {
@@ -189,6 +181,16 @@ mod tests {
             building_id: 0,
             light_id: 1,
             color: "#ff0000".to_string()
+        };
+        assert_eq!(msg, expected);
+    }
+
+    #[test]
+    fn decode_set_arduino_address() {
+        let msg = r##"{"type":"setArduinoAddress","address":"127.0.0.1:12345"}"##;
+        let msg : Msg = json::decode(msg).unwrap();
+        let expected = Msg::SetArduinoAddress {
+            address: "127.0.0.1:12345".to_socket_addrs().unwrap().next().unwrap()
         };
         assert_eq!(msg, expected);
     }
