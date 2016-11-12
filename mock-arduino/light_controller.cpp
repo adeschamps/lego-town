@@ -5,9 +5,9 @@
 #include <thread>
 
 LightController::LightController(Poco::Net::SocketAddress address)
-  : address(address)
+  : window(sf::VideoMode(100, 100), "LEGO Town")
+  , address(address)
   , message_buffer(100, '\0')
-  , window(sf::VideoMode(100, 100), "LEGO Town")
 {
   for (auto length : {3, 5, 4})
     lightstrips.emplace_back(length);
@@ -81,9 +81,9 @@ bool LightController::handle_message(light_controller::SetLight const & set_ligh
   auto lightId = set_light.light_id();
   auto color = parseColor(set_light.color());
 
-  if (light_group < 0 || light_group >= lightstrips.size()) return false;
+  if (light_group >= lightstrips.size()) return false;
   auto & lightstrip = lightstrips[light_group];
-  if (lightId < 0 || lightId >= lightstrip.size()) return false;
+  if (lightId >= lightstrip.size()) return false;
   auto & light = lightstrip[lightId];
   light.color = color;
 
@@ -96,7 +96,7 @@ bool LightController::handle_message(light_controller::SetGroup const & set_grou
   auto light_group = set_group.light_group();
   auto color = parseColor(set_group.color());
 
-  if (light_group < 0 || light_group >= lightstrips.size()) return false;
+  if (light_group >= lightstrips.size()) return false;
   auto & lightstrip = lightstrips[light_group];
   for (auto & light : lightstrip)
     light.color = color;

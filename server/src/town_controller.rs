@@ -54,8 +54,8 @@ impl TownController {
                     col.set_red(color[0] as i32);
                     col.set_green(color[1] as i32);
                     col.set_blue(color[2] as i32);
-                    sl.set_light_group(building_id as i32);
-                    sl.set_light_id(light_id as i32);
+                    sl.set_light_group(building_id as u32);
+                    sl.set_light_id(light_id as u32);
                     sl.set_color(col);
                     cmd.set_set_light(sl);
                     self.send_arduino_command(cmd);
@@ -73,7 +73,7 @@ impl TownController {
                     col.set_red(color[0] as i32);
                     col.set_green(color[1] as i32);
                     col.set_blue(color[2] as i32);
-                    sg.set_light_group(building_id as i32);
+                    sg.set_light_group(building_id as u32);
                     sg.set_color(col);
                     cmd.set_set_group(sg);
                     self.send_arduino_command(cmd);
@@ -115,8 +115,8 @@ impl TownController {
                 col.set_red(light.color[0] as i32);
                 col.set_green(light.color[1] as i32);
                 col.set_blue(light.color[2] as i32);
-                sl.set_light_group(building_id as i32);
-                sl.set_light_id(light_id as i32);
+                sl.set_light_group(building_id as u32);
+                sl.set_light_id(light_id as u32);
                 sl.set_color(col);
                 cmd.set_set_light(sl);
 
