@@ -18,7 +18,7 @@ import Parts exposing (Index)
 import Town
 
 type alias Model =
-    { name : String
+    { building : Town.Building
     , expanded : Bool
     , hue : Color.Hue
     , mdl : Material.Model
@@ -31,7 +31,7 @@ type Msg
 
 init : Town.Building -> Model
 init building =
-    { name = building.name
+    { building = building
     , expanded = False
     , hue = buildingHue building.name
     , mdl = Material.model
@@ -76,7 +76,7 @@ view model =
             [ Elevation.e2
             , Color.background <| Color.color model.hue Color.S500
             ]
-            [ Card.title [] [ Card.head [] [ text model.name ] ]
+            [ Card.title [] [ Card.head [] [ text model.building.name ] ]
             , Card.menu [] [ expandButton ]
             , Card.actions [ Color.background Color.white ]
                 <| if model.expanded then advancedActions else []
