@@ -1,4 +1,4 @@
-module SettingsPage exposing (..)
+module SettingsPage exposing (Model, Msg, OutMsg(..), init, update, view)
 
 import Html exposing (..)
 

@@ -1,4 +1,4 @@
-module TownPage exposing (..)
+module TownPage exposing (Model, Msg, OutMsg(..), init, update, view)
 
 import Color as StdColor exposing (hsl)
 
