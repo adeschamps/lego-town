@@ -4,8 +4,6 @@ module App exposing (main)
 
 import Dict
 
-import Erl
-
 import Html exposing (..)
 import Html.App
 
@@ -27,9 +25,7 @@ import Settings
 import SettingsPage
 
 import Town
-
 import TownApi
-
 import TownPage
 
 -- MODEL
@@ -56,10 +52,10 @@ init =
         { town = town
         , settings = settings
         , townPage = TownPage.init town
-        , settingsPage = SettingsPage.init settings
+        , settingsPage = SettingsPage.init
         , errorMsg = ""
         , mdl = Material.model
-    }
+        }
 
 -- UPDATE
 
@@ -106,16 +102,20 @@ handleTownMsg msg model =
 
 handleSettingsMsg : SettingsPage.OutMsg -> Model -> (Model, Cmd Msg)
 handleSettingsMsg msg model =
+    case msg of
+        SettingsPage.SettingsMsg msg' ->
+            updateSettings msg' model
+--            model ! []
+
+updateSettings : Settings.Msg -> Model -> (Model, Cmd Msg)
+updateSettings msg model =
     let
-        settings = model.settings
+        (newSettings, outMsg) = Settings.update msg model.settings
+        cmd = case outMsg of
+                  Just (Settings.Api cmd') -> [townServerCmd model cmd']
+                  Nothing -> []
     in
-        case msg of
-            SettingsPage.SetTownUrl url ->
-                let settings = {settings | townUrl = url}
-                in {model | settings = settings} ! [townServerCmd model TownApi.getState]
-            SettingsPage.SetArduinoUrl url ->
-                let settings = {settings | arduinoUrl = url}
-                in {model | settings = settings} ! [townServerCmd model <| TownApi.setArduinoAddress url]
+        {model | settings = newSettings} ! cmd
 
 
 handleTownServerMsg : TownApi.Msg -> Model -> (Model, Cmd Msg)
@@ -142,7 +142,7 @@ handleTownServerMsg msg model =
 
 townServerCmd : Model -> Json.Encode.Value -> Cmd Msg
 townServerCmd model value =
-    WebSocket.send (Erl.toString model.settings.townUrl) (Json.Encode.encode 0 value)
+    WebSocket.send model.settings.townUrl (Json.Encode.encode 0 value)
 
 -- VIEW
 
@@ -178,7 +178,7 @@ syncButton model =
 
 drawer : Model -> List (Html Msg)
 drawer model =
-    [ Html.App.map UpdateSettingsPage <|  SettingsPage.view model.settingsPage model.settings
+    [ Html.App.map UpdateSettingsPage <|  SettingsPage.view model.settings model.settingsPage
     ]
 
 body : Model -> List (Html Msg)
@@ -192,7 +192,7 @@ body model =
 main : Program Never
 main =
     Html.App.program
-        { init = (init, Cmd.none)
+        { init = update Synchronize init
         , view = view
         , subscriptions = subscriptions
         , update = update
@@ -200,4 +200,4 @@ main =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    WebSocket.listen (Erl.toString model.settings.townUrl) TownServerMsg
+    WebSocket.listen model.settings.townUrl TownServerMsg

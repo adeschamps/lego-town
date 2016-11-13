@@ -12,10 +12,6 @@ import List.Extra as List exposing (takeWhile)
 import Material
 import Material.Options as Options
 
-import OutMessage
-
-import Parts exposing (Index)
-
 import Building
 import Town
 import TownApi

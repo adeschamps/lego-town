@@ -3,8 +3,6 @@ module TownApi exposing (..)
 import Color exposing (Color)
 import Color.Convert exposing (..)
 
-import Erl
-
 import Json.Encode as Enc
 import Json.Decode exposing (..)
 import Json.Decode.Extra exposing (..)
@@ -16,7 +14,7 @@ import Result exposing (fromMaybe)
 type alias BuildingId = Int
 
 type Msg
-    = State Erl.Url (List BuildingInfo)
+    = State String (List BuildingInfo)
     | SetLights BuildingId (List LightState)
 
 type alias BuildingInfo =
@@ -32,6 +30,7 @@ type alias LightState =
 
 -- DECODERS
 
+buildingId : Decoder BuildingId
 buildingId = int
 
 msg : Decoder Msg
@@ -42,7 +41,7 @@ subMsg msgType =
     case msgType of
         "state" ->
             succeed State
-                |: ("arduinoAddress" := url)
+                |: ("arduinoAddress" := string)
                 |: ("buildings" := list buildingInfo)
         "setLights" ->
             succeed SetLights
@@ -70,12 +69,6 @@ color =
     in
         customDecoder string decodeColor
 
-url : Decoder Erl.Url
-url =
-    let
-        decodeUrl url = Erl.parse url
-    in
-        customDecoder string (decodeUrl >> Ok)
 
 -- OUTGOING MESSAGES
 
@@ -105,11 +98,11 @@ setLight buildingId lightId color =
         , ("color",      encColor color)
         ]
 
-setArduinoAddress : Erl.Url -> Value
+setArduinoAddress : String -> Value
 setArduinoAddress address =
     Enc.object
         [ ("type",    Enc.string "setArduinoAddress")
-        , ("address", Enc.string <| Erl.toString address)
+        , ("address", Enc.string address)
         ]
 
 encColor : Color -> Value
