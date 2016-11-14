@@ -2,8 +2,6 @@ module App exposing (main)
 
 -- EXTERNAL MODULES
 
-import Dict
-
 import Html exposing (..)
 import Html.App
 
@@ -123,14 +121,7 @@ handleTownServerMsg msg model =
     case msg of
         TownApi.State arduinoUrl buildingInfo ->
             let
-                town = model.town
-                newTown = { town | buildings = getBuildings buildingInfo }
-
-                getBuildings = Dict.fromList << List.map buildingKeyValue
-                buildingKeyValue b = ( b.buildingId , { name = b.name , lights = getLights b.lights } )
-
-                getLights = Dict.fromList << List.map lightKeyValue
-                lightKeyValue l = ( l.lightId , l.color )
+                newTown = Town.update (Town.SetBuildings buildingInfo) model.town
 
                 settings = model.settings
                 newSettings = { settings | arduinoUrl = arduinoUrl }
