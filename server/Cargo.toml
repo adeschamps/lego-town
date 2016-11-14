@@ -15,4 +15,4 @@ git = "https://github.com/plietar/rust-protobuf-build.git"
 optional = true
 
 [features]
-default = ["protobuf_build"]
+default = []
