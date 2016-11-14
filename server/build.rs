@@ -1,5 +1,3 @@
-#[cfg(not(feature="protobuf_build"))]
-use std::env;
 
 fn main() {
     #[cfg(feature="protobuf_build")]
@@ -15,11 +13,8 @@ fn main() {
 
     #[cfg(not(feature="protobuf_build"))]
     {
-        let out_dir = env::var("OUT_DIR").unwrap();
         println!("cargo:warning=Protobuf generation is disabled.");
-        println!("cargo:warning=Make sure you have a current generated file.");
-        println!("cargo:warning=It should preferably be in the in the src directory,");
-        println!("cargo:warning=although it can also go in {}", out_dir);
+        println!("cargo:warning=Make sure you have a current generated file in the src directory.");
     }
 }
 
