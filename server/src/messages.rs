@@ -1,4 +1,3 @@
-pub mod messages {
 // This file is generated. Do not edit
 // @generated
 
@@ -1092,6 +1091,4 @@ pub fn file_descriptor_proto() -> &'static ::protobuf::descriptor::FileDescripto
             parse_descriptor_proto()
         })
     }
-}
-
 }
