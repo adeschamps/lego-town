@@ -35,20 +35,20 @@ type SettingElement
 type alias SettingInfo =
     { element : SettingElement
     , label : String
-    , value : String
+    , getValue : Settings.Model -> String
     , saveMessage : String -> Settings.Msg
     }
 
-settingInfo : Settings.Model -> List SettingInfo
-settingInfo settings =
+settingInfo : List SettingInfo
+settingInfo =
     [ { element = TownUrl
       , label = "Town URL"
-      , value = settings.townUrl
+      , getValue = .townUrl
       , saveMessage = Settings.SetTownUrl
       }
     , { element = ArduinoUrl
       , label = "Arduino URL"
-      , value = settings.arduinoUrl
+      , getValue = .arduinoUrl
       , saveMessage = Settings.SetArduinoUrl
       }
     ]
@@ -92,21 +92,21 @@ update msg model =
 view : Settings.Model -> Model -> Html Msg
 view settings model =
     let
-        setting i info = viewSetting model (i::[]) info
+        setting i info = viewSetting settings model (i::[]) info
     in
         Options.div []
             [ Layout.title [] [ text "Settings" ]
-            , Options.div [] <| List.indexedMap setting <| settingInfo settings
+            , Options.div [] <| List.indexedMap setting <| settingInfo
             ]
 
 
-viewSetting : Model -> Index -> SettingInfo -> Html Msg
-viewSetting model index info =
+viewSetting : Settings.Model -> Model -> Index -> SettingInfo -> Html Msg
+viewSetting settings model index info =
     let
         editing = model.editing == Just info.element
         value = case (editing, model.inputValue) of
                     (True, Just value) -> value
-                    (_, _) -> info.value
+                    (_, _) -> info.getValue settings
     in
         Textfield.render Mdl (0::index) model.mdl
             [ Textfield.floatingLabel
