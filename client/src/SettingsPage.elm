@@ -16,7 +16,7 @@ import Settings
 type alias Mdl = Material.Model
 
 type alias Model =
-    { editing : Maybe SettingElement
+    { editing : Maybe SettingInfo
     , inputValue : Maybe String
     , mdl : Material.Model
     }
@@ -28,26 +28,19 @@ init =
     , mdl = Material.model
     }
 
-type SettingElement
-    = TownUrl
-    | ArduinoUrl
-
 type alias SettingInfo =
-    { element : SettingElement
-    , label : String
+    { label : String
     , getValue : Settings.Model -> String
     , saveMessage : String -> Settings.Msg
     }
 
 settingInfo : List SettingInfo
 settingInfo =
-    [ { element = TownUrl
-      , label = "Town URL"
+    [ { label = "Town URL"
       , getValue = .townUrl
       , saveMessage = Settings.SetTownUrl
       }
-    , { element = ArduinoUrl
-      , label = "Arduino URL"
+    , { label = "Arduino URL"
       , getValue = .arduinoUrl
       , saveMessage = Settings.SetArduinoUrl
       }
@@ -57,7 +50,7 @@ settingInfo =
 -- UPDATE
 
 type Msg
-    = BeginEditing SettingElement
+    = BeginEditing SettingInfo
     | UpdateValue String
     | EndEditing SettingInfo
     | Mdl (Material.Msg Msg)
@@ -68,8 +61,8 @@ type OutMsg
 update : Msg -> Model -> (Model, Cmd Msg, Maybe OutMsg)
 update msg model =
     case msg of
-        BeginEditing element ->
-            ({model | editing = Just element}, Cmd.none, Nothing)
+        BeginEditing info ->
+            ({model | editing = Just info}, Cmd.none, Nothing)
 
         UpdateValue value ->
             ({model | inputValue = Just value}, Cmd.none, Nothing)
@@ -103,7 +96,7 @@ view settings model =
 viewSetting : Settings.Model -> Model -> Index -> SettingInfo -> Html Msg
 viewSetting settings model index info =
     let
-        editing = model.editing == Just info.element
+        editing = model.editing == Just info
         value = case (editing, model.inputValue) of
                     (True, Just value) -> value
                     (_, _) -> info.getValue settings
@@ -112,7 +105,7 @@ viewSetting settings model index info =
             [ Textfield.floatingLabel
             , Textfield.label info.label
             , Textfield.value value
-            , Textfield.onFocus <| BeginEditing info.element
+            , Textfield.onFocus <| BeginEditing info
             , Textfield.onInput UpdateValue
             , Textfield.onBlur <| EndEditing info
         ]
