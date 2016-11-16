@@ -2,10 +2,14 @@ module SettingsPage exposing (Model, Msg, OutMsg(..), init, update, view)
 
 import Html exposing (..)
 
+import List.Extra as List
+
 import Material
 import Material.Layout as Layout
 import Material.Options as Options
 import Material.Textfield as Textfield
+
+import Maybe exposing (andThen)
 
 import Parts exposing (Index)
 
@@ -59,7 +63,7 @@ settingInfo =
 type Msg
     = BeginEditing SettingElement
     | UpdateValue String
-    | EndEditing SettingInfo
+    | EndEditing SettingElement
     | Mdl (Material.Msg Msg)
 
 type OutMsg
@@ -74,12 +78,14 @@ update msg model =
         UpdateValue value ->
             ({model | inputValue = Just value}, Cmd.none, Nothing)
 
-        EndEditing info ->
+        EndEditing element ->
             let
                 newModel = {model | editing = Nothing , inputValue = Nothing}
-                setValue = Maybe.map (SettingsMsg << info.saveMessage) model.inputValue
+                outMsg = settingInfo
+                       |> List.find (\i -> i.element == element)
+                       |> Maybe.map2 (\value i -> i.saveMessage value |> SettingsMsg) model.inputValue
             in
-                (newModel, Cmd.none, setValue)
+                (newModel, Cmd.none, outMsg)
 
         Mdl msg' ->
             let
@@ -114,5 +120,5 @@ viewSetting settings model index info =
             , Textfield.value value
             , Textfield.onFocus <| BeginEditing info.element
             , Textfield.onInput UpdateValue
-            , Textfield.onBlur <| EndEditing info
+            , Textfield.onBlur <| EndEditing info.element
         ]
