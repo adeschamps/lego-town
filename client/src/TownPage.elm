@@ -7,6 +7,8 @@ import Dict
 
 import Html exposing (..)
 
+import List.Extra as List
+
 import Material
 import Material.Button as Button
 import Material.Card as Card
@@ -74,14 +76,16 @@ viewBuilding index model building =
         expanded = model.expanded == Just building.id
         expandButton = viewExpandButton (0::index) model.mdl expanded building.id
         advancedActions = colorPicker (1::index) model.mdl (SetBuildingColor building.id)
+        offButton = Button.render Mdl (2::index) model.mdl [ Button.onClick <| SetBuildingColor building.id <| hsl 0 0 0 ] [ text "Off" ]
     in
         Card.view
             [ Elevation.e2
+            , Options.css "backgroundColor" (colorToHex <| mainColor building)
 --            , Color.background <| Color.color model.hue Color.S500
             ]
-            [ Card.title [] [ Card.head [] [ text building.name ] ]
+            [ Card.title [] [ Card.head [ Color.text Color.white ] [ text building.name ] ]
 --            , Card.menu [] [ expandButton ]
-            , Card.actions [ Color.background Color.white ] advancedActions
+            , Card.actions [ Color.background Color.white ] [ advancedActions , offButton ]
 --                <| if expanded then advancedActions else []
             ]
 
@@ -103,6 +107,17 @@ viewExpandButton index mdl expanded buildingId =
             ]
 
 
+mainColor : Town.Building -> StdColor.Color
+mainColor building =
+    let
+        unique = building.lights
+               |> Dict.values
+               |> List.uniqueBy (.color >> colorToHex)
+    in
+        case unique of
+            [light] -> light.color
+            _ -> hsl 0 0 0
+
 
 
 
@@ -110,7 +125,7 @@ viewExpandButton index mdl expanded buildingId =
 -- TODO: Move these to another module
 
 -- Creates a list of buttons which emit a message when clicked.
-colorPicker : Index -> Material.Model -> (StdColor.Color -> Msg) -> List (Html Msg)
+colorPicker : Index -> Material.Model -> (StdColor.Color -> Msg) -> Html Msg
 colorPicker index mdl onClick =
     let
         makeButton i color =
@@ -123,7 +138,7 @@ colorPicker index mdl onClick =
                 ]
             [ Icon.i "lightbulb_outline" ]
     in
-        rainbow 6 |> List.indexedMap makeButton
+        rainbow 6 |> List.indexedMap makeButton |> Options.div []
 
 -- Returns a list of colours evenly distributed around the hue circle.
 rainbow : Int -> List StdColor.Color
