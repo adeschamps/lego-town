@@ -43,17 +43,13 @@ type alias Model =
 
 init : Model
 init =
-    let
-        town = Town.init
-        settings = Settings.init
-    in
-        { town = town
-        , settings = settings
-        , townPage = TownPage.init town
-        , settingsPage = SettingsPage.init
-        , errorMsg = ""
-        , mdl = Material.model
-        }
+    { town = Town.init
+    , settings = Settings.init
+    , townPage = TownPage.init
+    , settingsPage = SettingsPage.init
+    , errorMsg = ""
+    , mdl = Material.model
+    }
 
 -- UPDATE
 
@@ -92,18 +88,20 @@ update msg model =
         Mdl msg' ->
             Material.update msg' model
 
+
 handleTownMsg : TownPage.OutMsg -> Model -> (Model, Cmd Msg)
 handleTownMsg msg model =
     case msg of
         TownPage.Api apiMsg ->
             model ! [townServerCmd model apiMsg]
 
+
 handleSettingsMsg : SettingsPage.OutMsg -> Model -> (Model, Cmd Msg)
 handleSettingsMsg msg model =
     case msg of
         SettingsPage.SettingsMsg msg' ->
             updateSettings msg' model
---            model ! []
+
 
 updateSettings : Settings.Msg -> Model -> (Model, Cmd Msg)
 updateSettings msg model =
@@ -174,7 +172,7 @@ drawer model =
 
 body : Model -> List (Html Msg)
 body model =
-    [ Html.App.map UpdateTownPage <| TownPage.view model.townPage model.town
+    [ Html.App.map UpdateTownPage <| TownPage.view model.town model.townPage
     , text model.errorMsg
     ]
 

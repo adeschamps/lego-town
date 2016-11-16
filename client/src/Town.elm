@@ -3,29 +3,34 @@ module Town exposing (..)
 import TownApi
 
 import Color exposing (Color)
+
 import Dict exposing (Dict)
+import Dict.Extra as Dict
 
 -- MODEL
 
+type alias BuildingId = Int
 type alias Model =
-    { buildings : Dict Int Building
+    { buildings : Dict BuildingId Building
     }
 
 type alias Building =
-    { name : String
+    { id : BuildingId
+    , name : String
     , lights : Dict Int Color
     }
 
 genericBuilding : Building
 genericBuilding =
-    { name = "Generic Building"
+    { id = -1
+    , name = "Generic Building"
     , lights = Dict.empty
     }
 
 init : Model
 init =
     { buildings = Dict.empty
-    --  |> Dict.insert 0 genericBuilding
+    |> Dict.insert 0 genericBuilding
     }
 
 -- UPDATE
@@ -38,11 +43,15 @@ update msg model =
     case msg of
         SetBuildings buildingInfo ->
             let
-                makeBuilding info = (info.buildingId, { name = info.name
-                                                      , lights = Dict.empty
-                                                      })
                 buildings = buildingInfo
-                          |> List.map makeBuilding
-                          |> Dict.fromList
+                          |> List.map infoToBuilding
+                          |> Dict.fromListBy .id
             in
                 { model | buildings = buildings }
+
+infoToBuilding : TownApi.BuildingInfo -> Building
+infoToBuilding info =
+    { id = info.buildingId
+    , name = info.name
+    , lights = Dict.empty -- TODO: fill in
+    }

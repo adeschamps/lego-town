@@ -1,38 +1,41 @@
 module TownPage exposing (Model, Msg, OutMsg(..), init, update, view)
 
 import Color as StdColor exposing (hsl)
+import Color.Convert exposing (colorToHex)
 
 import Dict
 
 import Html exposing (..)
-import Html.App
-
-import List.Extra as List exposing (takeWhile)
 
 import Material
+import Material.Button as Button
+import Material.Card as Card
+import Material.Color as Color
+import Material.Elevation as Elevation
+import Material.Icon as Icon
 import Material.Options as Options
 
-import Building
+import Parts exposing (Index)
+
 import Town
 import TownApi
 
+
 type alias Model =
-    { buildings : List Building.Model
+    { expanded : Maybe Town.BuildingId
     , mdl : Material.Model
     }
 
-init : Town.Model -> Model
-init town =
-    { buildings = List.map Building.init <| Dict.values town.buildings
+init : Model
+init =
+    { expanded = Nothing
     , mdl = Material.model
     }
 
-type alias BuildingId = Int
-
 type Msg
-    = SetBuilding Int StdColor.Color
-    | SetLight Int Int StdColor.Color
-    | UpdateBuilding BuildingId Building.Msg
+    = Expand Town.BuildingId
+    | Collapse
+    | SetBuildingColor Town.BuildingId StdColor.Color
     | Mdl (Material.Msg Msg)
 
 
@@ -42,39 +45,92 @@ type OutMsg
 update : Msg -> Model -> (Model, Cmd Msg, Maybe OutMsg)
 update msg model =
     case msg of
-        SetBuilding buildingId color ->
-            ( model
-            , Cmd.none
-            , Just <| Api <| TownApi.setBuilding buildingId color
-            )
+        Expand buildingId ->
+            let model = { model | expanded = Just buildingId }
+            in (model, Cmd.none, Nothing)
 
-        SetLight buildingId lightId color ->
-            ( model
-            , Cmd.none
-            , Just <| Api <| TownApi.setLight buildingId lightId color
-            )
+        Collapse ->
+            let model = { model | expanded = Nothing }
+            in (model, Cmd.none, Nothing)
 
-        UpdateBuilding id msg' ->
-            case List.getAt id model.buildings of
-                Nothing ->
-                    (model, Cmd.none, Nothing)
-                Just building ->
-                    let
-                        (newBuilding, cmd) = Building.update msg' building
-                        newBuildings = case List.setAt id newBuilding model.buildings of
-                                           Nothing -> model.buildings
-                                           Just buildings -> buildings
-                    in
-                        ({model | buildings = newBuildings}, Cmd.none, Nothing)
+        SetBuildingColor id color ->
+            let outMsg = Api <| TownApi.setBuilding id color
+            in (model, Cmd.none, Just outMsg)
 
         Mdl msg' -> let (model, cmd) = Material.update msg' model
                     in (model, cmd, Nothing)
 
 
-view : Model -> Town.Model -> Html Msg
-view model town =
+view : Town.Model -> Model -> Html Msg
+view town model =
+    Options.div []
+        <| List.map (\(k, b) -> viewBuilding (k::[]) model b)
+        <| Dict.toList town.buildings
+
+
+viewBuilding : Index -> Model -> Town.Building -> Html Msg
+viewBuilding index model building =
     let
-        viewBuilding id building = Html.App.map (UpdateBuilding id) <| Building.view building
+        expanded = model.expanded == Just building.id
+        expandButton = viewExpandButton (0::index) model.mdl expanded building.id
+        advancedActions = colorPicker (1::index) model.mdl (SetBuildingColor building.id)
     in
-        Options.div []
-            <| List.indexedMap viewBuilding model.buildings
+        Card.view
+            [ Elevation.e2
+--            , Color.background <| Color.color model.hue Color.S500
+            ]
+            [ Card.title [] [ Card.head [] [ text building.name ] ]
+--            , Card.menu [] [ expandButton ]
+            , Card.actions [ Color.background Color.white ] advancedActions
+--                <| if expanded then advancedActions else []
+            ]
+
+
+viewExpandButton : Index -> Material.Model -> Bool -> Town.BuildingId -> Html Msg
+viewExpandButton index mdl expanded buildingId =
+    let
+        (icon, onClick) =
+            if expanded
+            then ("expand_less", Collapse)
+            else ("expand_more", Expand buildingId)
+    in
+        Button.render Mdl (0::index) mdl
+            [ Button.icon
+            , Button.ripple
+            , Button.onClick onClick
+            ]
+            [ Icon.i icon
+            ]
+
+
+
+
+
+-- UTIL
+-- TODO: Move these to another module
+
+-- Creates a list of buttons which emit a message when clicked.
+colorPicker : Index -> Material.Model -> (StdColor.Color -> Msg) -> List (Html Msg)
+colorPicker index mdl onClick =
+    let
+        makeButton i color =
+            Button.render Mdl (i::index) mdl
+                [ Button.icon
+                , Button.ripple
+                , Color.text Color.white
+                , Button.onClick <| onClick color
+                , Options.css "backgroundColor" (colorToHex color)
+                ]
+            [ Icon.i "lightbulb_outline" ]
+    in
+        rainbow 6 |> List.indexedMap makeButton
+
+-- Returns a list of colours evenly distributed around the hue circle.
+rainbow : Int -> List StdColor.Color
+rainbow count =
+    let
+        delta = 360 / (toFloat count) |> degrees
+    in
+        [0..count-1]
+            |> List.map (\i -> (toFloat i) * delta)
+            |> List.map (\hue -> hsl hue 1.0 0.5)
