@@ -78,8 +78,13 @@ impl TownController {
                     cmd.set_set_group(sg);
                     self.send_arduino_command(cmd);
 
+                    for light in &mut self.town.buildings[building_id as usize].lights {
+                        light.color = color;
+                    }
+
                     let response = self.get_state();
                     let response = json::encode(&response).unwrap();
+                    println!("responding: {}", response);
                     out.broadcast(response).unwrap();
                 }
 
