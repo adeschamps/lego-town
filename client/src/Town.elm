@@ -10,6 +10,8 @@ import Dict.Extra as Dict
 -- MODEL
 
 type alias BuildingId = Int
+type alias LightId = Int
+
 type alias Model =
     { buildings : Dict BuildingId Building
     }
@@ -17,7 +19,12 @@ type alias Model =
 type alias Building =
     { id : BuildingId
     , name : String
-    , lights : Dict Int Color
+    , lights : Dict LightId Light
+    }
+
+type alias Light =
+    { id : LightId
+    , color : Color
     }
 
 genericBuilding : Building
@@ -53,5 +60,11 @@ infoToBuilding : TownApi.BuildingInfo -> Building
 infoToBuilding info =
     { id = info.buildingId
     , name = info.name
-    , lights = Dict.empty -- TODO: fill in
+    , lights = info.lights |> List.map stateToLight |> Dict.fromListBy .id
+    }
+
+stateToLight : TownApi.LightState -> Light
+stateToLight state =
+    { id = state.lightId
+    , color = state.color
     }
