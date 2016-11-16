@@ -9,7 +9,7 @@ LightController::LightController(Poco::Net::SocketAddress address)
   , address(address)
   , message_buffer(100, '\0')
 {
-  for (auto length : {3, 5, 4})
+  for (auto length : {3, 3, 2, 3})
     lightstrips.emplace_back(length);
 
   incoming_socket.bind(address);
