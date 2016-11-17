@@ -30,11 +30,17 @@ fn main() {
              .help("Sets the ip address of the arduino")
              .default_value("127.0.0.1:12345")
              .validator(|s| SocketAddr::from_str(s.as_str()).map(|_| ()).map_err(|e| e.to_string() )))
+        .arg(Arg::with_name("config data")
+             .short("c")
+             .long("config")
+             .help("Configuration data for the town")
+             .default_value("config-data.json"))
         .get_matches();
 
 
     // Initialize town model
-    let town = construct_town("init-data.json");
+    let config_data = matches.value_of("config data").unwrap();
+    let town = construct_town(config_data);
     println!("Initialized town: {}", json::as_pretty_json(&town));
 
     // Create town controller
