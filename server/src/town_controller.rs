@@ -111,6 +111,14 @@ impl TownController {
     /// Sets each light individually to match the current model.
     /// This sends one packet per light.
     fn initialize_arduino(&self) {
+        let mut cmd = messages::Command::new();
+        let mut init = messages::Initialize::new();
+        for length in self.town.buildings.iter().map(|b| b.lights.len()) {
+            init.mut_string_lengths().push(length as u32);
+        }
+        cmd.set_initialize(init);
+        self.send_arduino_command(cmd);
+
         for (building_id, building) in self.town.buildings.iter().enumerate() {
             for (light_id, light) in building.lights.iter().enumerate() {
 

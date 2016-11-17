@@ -6,6 +6,7 @@ message Command {
   oneof CommandType {
     SetLight set_light = 1;
     SetGroup set_group = 2;
+    Initialize initialize = 3;
   }
 }
 
@@ -24,4 +25,8 @@ message Color {
   int32 red = 1;
   int32 green = 2;
   int32 blue = 3;
+}
+
+message Initialize {
+  repeated uint32 string_lengths = 1;
 }

@@ -23,6 +23,7 @@ private:
   void handle_messages();
   bool handle_message(light_controller::SetLight const &);
   bool handle_message(light_controller::SetGroup const &);
+  bool handle_message(light_controller::Initialize const &);
 
   // Draws the window
   void draw();
