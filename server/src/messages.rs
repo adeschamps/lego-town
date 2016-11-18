@@ -36,6 +36,7 @@ unsafe impl ::std::marker::Sync for Command {}
 pub enum Command_oneof_CommandType {
     set_light(SetLight),
     set_group(SetGroup),
+    initialize(Initialize),
 }
 
 impl Command {
@@ -158,6 +159,56 @@ impl Command {
             _ => SetGroup::default_instance(),
         }
     }
+
+    // optional .light_controller.Initialize initialize = 3;
+
+    pub fn clear_initialize(&mut self) {
+        self.CommandType = ::std::option::Option::None;
+    }
+
+    pub fn has_initialize(&self) -> bool {
+        match self.CommandType {
+            ::std::option::Option::Some(Command_oneof_CommandType::initialize(..)) => true,
+            _ => false,
+        }
+    }
+
+    // Param is passed by value, moved
+    pub fn set_initialize(&mut self, v: Initialize) {
+        self.CommandType = ::std::option::Option::Some(Command_oneof_CommandType::initialize(v))
+    }
+
+    // Mutable pointer to the field.
+    // If field is not initialized, it is initialized with default value first.
+    pub fn mut_initialize(&mut self) -> &mut Initialize {
+        if let ::std::option::Option::Some(Command_oneof_CommandType::initialize(_)) = self.CommandType {
+        } else {
+            self.CommandType = ::std::option::Option::Some(Command_oneof_CommandType::initialize(Initialize::new()));
+        }
+        match self.CommandType {
+            ::std::option::Option::Some(Command_oneof_CommandType::initialize(ref mut v)) => v,
+            _ => panic!(),
+        }
+    }
+
+    // Take field
+    pub fn take_initialize(&mut self) -> Initialize {
+        if self.has_initialize() {
+            match self.CommandType.take() {
+                ::std::option::Option::Some(Command_oneof_CommandType::initialize(v)) => v,
+                _ => panic!(),
+            }
+        } else {
+            Initialize::new()
+        }
+    }
+
+    pub fn get_initialize(&self) -> &Initialize {
+        match self.CommandType {
+            ::std::option::Option::Some(Command_oneof_CommandType::initialize(ref v)) => v,
+            _ => Initialize::default_instance(),
+        }
+    }
 }
 
 impl ::protobuf::Message for Command {
@@ -181,6 +232,12 @@ impl ::protobuf::Message for Command {
                     };
                     self.CommandType = ::std::option::Option::Some(Command_oneof_CommandType::set_group(try!(is.read_message())));
                 },
+                3 => {
+                    if wire_type != ::protobuf::wire_format::WireTypeLengthDelimited {
+                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
+                    };
+                    self.CommandType = ::std::option::Option::Some(Command_oneof_CommandType::initialize(try!(is.read_message())));
+                },
                 _ => {
                     try!(::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields()));
                 },
@@ -203,6 +260,10 @@ impl ::protobuf::Message for Command {
                     let len = v.compute_size();
                     my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
                 },
+                &Command_oneof_CommandType::initialize(ref v) => {
+                    let len = v.compute_size();
+                    my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
+                },
             };
         };
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
@@ -220,6 +281,11 @@ impl ::protobuf::Message for Command {
                 },
                 &Command_oneof_CommandType::set_group(ref v) => {
                     try!(os.write_tag(2, ::protobuf::wire_format::WireTypeLengthDelimited));
+                    try!(os.write_raw_varint32(v.get_cached_size()));
+                    try!(v.write_to_with_cached_sizes(os));
+                },
+                &Command_oneof_CommandType::initialize(ref v) => {
+                    try!(os.write_tag(3, ::protobuf::wire_format::WireTypeLengthDelimited));
                     try!(os.write_raw_varint32(v.get_cached_size()));
                     try!(v.write_to_with_cached_sizes(os));
                 },
@@ -277,6 +343,11 @@ impl ::protobuf::MessageStatic for Command {
                     Command::has_set_group,
                     Command::get_set_group,
                 ));
+                fields.push(::protobuf::reflect::accessor::make_singular_message_accessor(
+                    "initialize",
+                    Command::has_initialize,
+                    Command::get_initialize,
+                ));
                 ::protobuf::reflect::MessageDescriptor::new::<Command>(
                     "Command",
                     fields,
@@ -291,6 +362,7 @@ impl ::protobuf::Clear for Command {
     fn clear(&mut self) {
         self.clear_set_light();
         self.clear_set_group();
+        self.clear_initialize();
         self.unknown_fields.clear();
     }
 }
@@ -1049,31 +1121,208 @@ impl ::std::fmt::Debug for Color {
     }
 }
 
+#[derive(Clone,Default)]
+pub struct Initialize {
+    // message fields
+    string_lengths: ::std::vec::Vec<u32>,
+    // special fields
+    unknown_fields: ::protobuf::UnknownFields,
+    cached_size: ::std::cell::Cell<u32>,
+}
+
+// see codegen.rs for the explanation why impl Sync explicitly
+unsafe impl ::std::marker::Sync for Initialize {}
+
+impl Initialize {
+    pub fn new() -> Initialize {
+        ::std::default::Default::default()
+    }
+
+    pub fn default_instance() -> &'static Initialize {
+        static mut instance: ::protobuf::lazy::Lazy<Initialize> = ::protobuf::lazy::Lazy {
+            lock: ::protobuf::lazy::ONCE_INIT,
+            ptr: 0 as *const Initialize,
+        };
+        unsafe {
+            instance.get(|| {
+                Initialize {
+                    string_lengths: ::std::vec::Vec::new(),
+                    unknown_fields: ::protobuf::UnknownFields::new(),
+                    cached_size: ::std::cell::Cell::new(0),
+                }
+            })
+        }
+    }
+
+    // repeated uint32 string_lengths = 1;
+
+    pub fn clear_string_lengths(&mut self) {
+        self.string_lengths.clear();
+    }
+
+    // Param is passed by value, moved
+    pub fn set_string_lengths(&mut self, v: ::std::vec::Vec<u32>) {
+        self.string_lengths = v;
+    }
+
+    // Mutable pointer to the field.
+    pub fn mut_string_lengths(&mut self) -> &mut ::std::vec::Vec<u32> {
+        &mut self.string_lengths
+    }
+
+    // Take field
+    pub fn take_string_lengths(&mut self) -> ::std::vec::Vec<u32> {
+        ::std::mem::replace(&mut self.string_lengths, ::std::vec::Vec::new())
+    }
+
+    pub fn get_string_lengths(&self) -> &[u32] {
+        &self.string_lengths
+    }
+}
+
+impl ::protobuf::Message for Initialize {
+    fn is_initialized(&self) -> bool {
+        true
+    }
+
+    fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream) -> ::protobuf::ProtobufResult<()> {
+        while !try!(is.eof()) {
+            let (field_number, wire_type) = try!(is.read_tag_unpack());
+            match field_number {
+                1 => {
+                    try!(::protobuf::rt::read_repeated_uint32_into(wire_type, is, &mut self.string_lengths));
+                },
+                _ => {
+                    try!(::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields()));
+                },
+            };
+        }
+        ::std::result::Result::Ok(())
+    }
+
+    // Compute sizes of nested messages
+    #[allow(unused_variables)]
+    fn compute_size(&self) -> u32 {
+        let mut my_size = 0;
+        for value in &self.string_lengths {
+            my_size += ::protobuf::rt::value_size(1, *value, ::protobuf::wire_format::WireTypeVarint);
+        };
+        my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
+        self.cached_size.set(my_size);
+        my_size
+    }
+
+    fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream) -> ::protobuf::ProtobufResult<()> {
+        for v in &self.string_lengths {
+            try!(os.write_uint32(1, *v));
+        };
+        try!(os.write_unknown_fields(self.get_unknown_fields()));
+        ::std::result::Result::Ok(())
+    }
+
+    fn get_cached_size(&self) -> u32 {
+        self.cached_size.get()
+    }
+
+    fn get_unknown_fields(&self) -> &::protobuf::UnknownFields {
+        &self.unknown_fields
+    }
+
+    fn mut_unknown_fields(&mut self) -> &mut ::protobuf::UnknownFields {
+        &mut self.unknown_fields
+    }
+
+    fn type_id(&self) -> ::std::any::TypeId {
+        ::std::any::TypeId::of::<Initialize>()
+    }
+
+    fn as_any(&self) -> &::std::any::Any {
+        self as &::std::any::Any
+    }
+
+    fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {
+        ::protobuf::MessageStatic::descriptor_static(None::<Self>)
+    }
+}
+
+impl ::protobuf::MessageStatic for Initialize {
+    fn new() -> Initialize {
+        Initialize::new()
+    }
+
+    fn descriptor_static(_: ::std::option::Option<Initialize>) -> &'static ::protobuf::reflect::MessageDescriptor {
+        static mut descriptor: ::protobuf::lazy::Lazy<::protobuf::reflect::MessageDescriptor> = ::protobuf::lazy::Lazy {
+            lock: ::protobuf::lazy::ONCE_INIT,
+            ptr: 0 as *const ::protobuf::reflect::MessageDescriptor,
+        };
+        unsafe {
+            descriptor.get(|| {
+                let mut fields = ::std::vec::Vec::new();
+                fields.push(::protobuf::reflect::accessor::make_repeated_u32_accessor(
+                    "string_lengths",
+                    Initialize::get_string_lengths,
+                ));
+                ::protobuf::reflect::MessageDescriptor::new::<Initialize>(
+                    "Initialize",
+                    fields,
+                    file_descriptor_proto()
+                )
+            })
+        }
+    }
+}
+
+impl ::protobuf::Clear for Initialize {
+    fn clear(&mut self) {
+        self.clear_string_lengths();
+        self.unknown_fields.clear();
+    }
+}
+
+impl ::std::cmp::PartialEq for Initialize {
+    fn eq(&self, other: &Initialize) -> bool {
+        self.string_lengths == other.string_lengths &&
+        self.unknown_fields == other.unknown_fields
+    }
+}
+
+impl ::std::fmt::Debug for Initialize {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        ::protobuf::text_format::fmt(self, f)
+    }
+}
+
 static file_descriptor_proto_data: &'static [u8] = &[
     0x0a, 0x0e, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
     0x12, 0x10, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x6c,
-    0x65, 0x72, 0x22, 0x7a, 0x0a, 0x07, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x2f, 0x0a,
-    0x09, 0x73, 0x65, 0x74, 0x5f, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-    0x32, 0x1a, 0x2e, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c,
-    0x6c, 0x65, 0x72, 0x2e, 0x53, 0x65, 0x74, 0x4c, 0x69, 0x67, 0x68, 0x74, 0x48, 0x00, 0x12, 0x2f,
-    0x0a, 0x09, 0x73, 0x65, 0x74, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x02, 0x20, 0x01, 0x28,
+    0x65, 0x72, 0x22, 0xae, 0x01, 0x0a, 0x07, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x2f,
+    0x0a, 0x09, 0x73, 0x65, 0x74, 0x5f, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28,
     0x0b, 0x32, 0x1a, 0x2e, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f,
-    0x6c, 0x6c, 0x65, 0x72, 0x2e, 0x53, 0x65, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x48, 0x00, 0x42,
-    0x0d, 0x0a, 0x0b, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x54, 0x79, 0x70, 0x65, 0x22, 0x59,
-    0x0a, 0x08, 0x53, 0x65, 0x74, 0x4c, 0x69, 0x67, 0x68, 0x74, 0x12, 0x13, 0x0a, 0x0b, 0x6c, 0x69,
+    0x6c, 0x6c, 0x65, 0x72, 0x2e, 0x53, 0x65, 0x74, 0x4c, 0x69, 0x67, 0x68, 0x74, 0x48, 0x00, 0x12,
+    0x2f, 0x0a, 0x09, 0x73, 0x65, 0x74, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x02, 0x20, 0x01,
+    0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x63, 0x6f, 0x6e, 0x74, 0x72,
+    0x6f, 0x6c, 0x6c, 0x65, 0x72, 0x2e, 0x53, 0x65, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x48, 0x00,
+    0x12, 0x32, 0x0a, 0x0a, 0x69, 0x6e, 0x69, 0x74, 0x69, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x18, 0x03,
+    0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x63, 0x6f, 0x6e,
+    0x74, 0x72, 0x6f, 0x6c, 0x6c, 0x65, 0x72, 0x2e, 0x49, 0x6e, 0x69, 0x74, 0x69, 0x61, 0x6c, 0x69,
+    0x7a, 0x65, 0x48, 0x00, 0x42, 0x0d, 0x0a, 0x0b, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x54,
+    0x79, 0x70, 0x65, 0x22, 0x59, 0x0a, 0x08, 0x53, 0x65, 0x74, 0x4c, 0x69, 0x67, 0x68, 0x74, 0x12,
+    0x13, 0x0a, 0x0b, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01,
+    0x20, 0x01, 0x28, 0x0d, 0x12, 0x10, 0x0a, 0x08, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x69, 0x64,
+    0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x12, 0x26, 0x0a, 0x05, 0x63, 0x6f, 0x6c, 0x6f, 0x72, 0x18,
+    0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x63, 0x6f,
+    0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x6c, 0x65, 0x72, 0x2e, 0x43, 0x6f, 0x6c, 0x6f, 0x72, 0x22, 0x47,
+    0x0a, 0x08, 0x53, 0x65, 0x74, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x13, 0x0a, 0x0b, 0x6c, 0x69,
     0x67, 0x68, 0x74, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x12,
-    0x10, 0x0a, 0x08, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28,
-    0x0d, 0x12, 0x26, 0x0a, 0x05, 0x63, 0x6f, 0x6c, 0x6f, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b,
-    0x32, 0x17, 0x2e, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c,
-    0x6c, 0x65, 0x72, 0x2e, 0x43, 0x6f, 0x6c, 0x6f, 0x72, 0x22, 0x47, 0x0a, 0x08, 0x53, 0x65, 0x74,
-    0x47, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x13, 0x0a, 0x0b, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x67,
-    0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x12, 0x26, 0x0a, 0x05, 0x63, 0x6f,
-    0x6c, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x6c, 0x69, 0x67, 0x68,
-    0x74, 0x5f, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x6c, 0x65, 0x72, 0x2e, 0x43, 0x6f, 0x6c,
-    0x6f, 0x72, 0x22, 0x31, 0x0a, 0x05, 0x43, 0x6f, 0x6c, 0x6f, 0x72, 0x12, 0x0b, 0x0a, 0x03, 0x72,
-    0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x12, 0x0d, 0x0a, 0x05, 0x67, 0x72, 0x65, 0x65,
-    0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x12, 0x0c, 0x0a, 0x04, 0x62, 0x6c, 0x75, 0x65, 0x18,
-    0x03, 0x20, 0x01, 0x28, 0x05, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+    0x26, 0x0a, 0x05, 0x63, 0x6f, 0x6c, 0x6f, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17,
+    0x2e, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x63, 0x6f, 0x6e, 0x74, 0x72, 0x6f, 0x6c, 0x6c, 0x65,
+    0x72, 0x2e, 0x43, 0x6f, 0x6c, 0x6f, 0x72, 0x22, 0x31, 0x0a, 0x05, 0x43, 0x6f, 0x6c, 0x6f, 0x72,
+    0x12, 0x0b, 0x0a, 0x03, 0x72, 0x65, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x12, 0x0d, 0x0a,
+    0x05, 0x67, 0x72, 0x65, 0x65, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x12, 0x0c, 0x0a, 0x04,
+    0x62, 0x6c, 0x75, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x22, 0x24, 0x0a, 0x0a, 0x49, 0x6e,
+    0x69, 0x74, 0x69, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x12, 0x16, 0x0a, 0x0e, 0x73, 0x74, 0x72, 0x69,
+    0x6e, 0x67, 0x5f, 0x6c, 0x65, 0x6e, 0x67, 0x74, 0x68, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0d,
+    0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 ];
 
 static mut file_descriptor_proto_lazy: ::protobuf::lazy::Lazy<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::lazy::Lazy {
