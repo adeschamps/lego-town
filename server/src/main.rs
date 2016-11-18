@@ -22,6 +22,7 @@ use std::str::FromStr;
 
 fn main() {
     let matches = App::new("LEGO Town Server")
+        .version(crate_version!())
         .author(crate_authors!())
         .about("Controls the lights in LEGO Town")
         .arg(Arg::with_name("arduino address")
@@ -29,7 +30,7 @@ fn main() {
              .long("addr")
              .help("Sets the ip address of the arduino")
              .default_value("127.0.0.1:12345")
-             .validator(|s| SocketAddr::from_str(s.as_str()).map(|_| ()).map_err(|e| e.to_string() )))
+             .validator(|s| SocketAddr::from_str(&s).map(|_| ()).map_err(|e| e.to_string() )))
         .arg(Arg::with_name("config data")
              .short("c")
              .long("config")
@@ -69,7 +70,7 @@ fn construct_town(filename: &str) -> Town {
         Err(e) => panic!("Failed to read file: {}", e),
         Ok(x) => x
     };
-    let town = match json::decode(init_data.as_str()) {
+    let town = match json::decode(&init_data) {
         Err(e) => panic!("Failed to parse init data: {}", e),
         Ok(town) => town
     };
