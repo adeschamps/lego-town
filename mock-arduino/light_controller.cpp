@@ -9,9 +9,6 @@ LightController::LightController(Poco::Net::SocketAddress address)
   , address(address)
   , message_buffer(100, '\0')
 {
-  for (auto length : {3, 5, 4})
-    lightstrips.emplace_back(length);
-
   incoming_socket.bind(address);
   incoming_socket.setBlocking(false);
 }
@@ -61,6 +58,7 @@ void LightController::handle_messages()
   success &= [&]{switch(command.CommandType_case()) {
     case CT::kSetLight: return handle_message(command.set_light());
     case CT::kSetGroup: return handle_message(command.set_group());
+    case CT::kInitialize: return handle_message(command.initialize());
     default: return false;
     }}();
 
@@ -102,6 +100,21 @@ bool LightController::handle_message(light_controller::SetGroup const & set_grou
     light.color = color;
   return true;
 
+}
+
+
+bool LightController::handle_message(light_controller::Initialize const & initialize)
+{
+  // NOTE: On an Arduino, one should be careful doing this,
+  // because dynamic memory allocations can easily result in fragmentation.
+  // For this application, this is the ONLY place where memory is dynamically
+  // allocated. Since all dynamically allocated memory is cleared before
+  // being reallocated, fragementation is, in this case, impossible.
+  // But be careful.
+  lightstrips.clear();
+  for (auto length : initialize.string_lengths())
+    lightstrips.emplace_back(length);
+  return true;
 }
 
 

@@ -78,8 +78,13 @@ impl TownController {
                     cmd.set_set_group(sg);
                     self.send_arduino_command(cmd);
 
+                    for light in &mut self.town.buildings[building_id as usize].lights {
+                        light.color = color;
+                    }
+
                     let response = self.get_state();
                     let response = json::encode(&response).unwrap();
+                    println!("responding: {}", response);
                     out.broadcast(response).unwrap();
                 }
 
@@ -106,6 +111,14 @@ impl TownController {
     /// Sets each light individually to match the current model.
     /// This sends one packet per light.
     fn initialize_arduino(&self) {
+        let mut cmd = messages::Command::new();
+        let mut init = messages::Initialize::new();
+        for length in self.town.buildings.iter().map(|b| b.lights.len()) {
+            init.mut_string_lengths().push(length as u32);
+        }
+        cmd.set_initialize(init);
+        self.send_arduino_command(cmd);
+
         for (building_id, building) in self.town.buildings.iter().enumerate() {
             for (light_id, light) in building.lights.iter().enumerate() {
 

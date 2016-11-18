@@ -1,24 +1,39 @@
 module Settings exposing (..)
 
-import Erl
+import TownApi
 
-type alias Settings =
-    { townUrl : Erl.Url
-    , arduinoUrl : Erl.Url
+
+type alias Model =
+    { townUrl : String
+    , arduinoUrl : String
     }
 
-init : Settings
+
+init : Model
 init =
-    { townUrl = Erl.parse "ws://192.168.1.136:1234"
-    , arduinoUrl = Erl.parse "127.0.0.1:5000"
+    { townUrl = "ws://192.168.1.136:1234"
+    , arduinoUrl = ""
     }
+
 
 type Msg
-    = SetTownUrl Erl.Url
-    | SetArduinoUrl Erl.Url
+    = SetTownUrl String
+    | SetArduinoUrl String
 
-update : Msg -> Settings -> Settings
+
+type OutMsg
+    = Api TownApi.Type
+
+
+update : Msg -> Model -> ( Model, Maybe OutMsg )
 update msg model =
     case msg of
-        SetTownUrl url -> { model | townUrl = url }
-        SetArduinoUrl url -> { model | arduinoUrl = url }
+        SetTownUrl url ->
+            ( { model | townUrl = url }, Nothing )
+
+        SetArduinoUrl url ->
+            let
+                outMsg =
+                    Api <| TownApi.setArduinoAddress url
+            in
+                ( { model | arduinoUrl = url }, Just outMsg )

@@ -5,6 +5,7 @@ authors = ["Anthony Deschamps <anthony.j.deschamps@gmail.com>"]
 build = "build.rs"
 
 [dependencies]
+clap = "2.18.0"
 protobuf = "1.0.24"
 read_color = "0.1.0"
 rustc-serialize = "0.3"
