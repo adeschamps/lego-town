@@ -3,7 +3,6 @@ module App exposing (main)
 -- EXTERNAL MODULES
 
 import Html exposing (..)
-import Html.App
 import Json.Decode
 import Json.Encode
 import Material
@@ -69,15 +68,15 @@ update msg model =
         Synchronize ->
             model ! [ townServerCmd model TownApi.getState ]
 
-        UpdateTownPage msg' ->
-            TownPage.update msg' model.townPage
+        UpdateTownPage msg_ ->
+            TownPage.update msg_ model.townPage
                 |> OutMessage.mapComponent
                     (\newTownPage -> { model | townPage = newTownPage })
                 |> OutMessage.mapCmd UpdateTownPage
                 |> OutMessage.evaluateMaybe handleTownMsg Cmd.none
 
-        UpdateSettingsPage msg' ->
-            SettingsPage.update msg' model.settingsPage
+        UpdateSettingsPage msg_ ->
+            SettingsPage.update msg_ model.settingsPage
                 |> OutMessage.mapComponent
                     (\newSettingsPage -> { model | settingsPage = newSettingsPage })
                 |> OutMessage.mapCmd UpdateSettingsPage
@@ -91,8 +90,8 @@ update msg model =
                 Ok msg ->
                     handleTownServerMsg msg model
 
-        Mdl msg' ->
-            Material.update msg' model
+        Mdl msg_ ->
+            Material.update msg_ model
 
 
 handleTownMsg : TownPage.OutMsg -> Model -> ( Model, Cmd Msg )
@@ -105,8 +104,8 @@ handleTownMsg msg model =
 handleSettingsMsg : SettingsPage.OutMsg -> Model -> ( Model, Cmd Msg )
 handleSettingsMsg msg model =
     case msg of
-        SettingsPage.SettingsMsg msg' ->
-            updateSettings msg' model
+        SettingsPage.SettingsMsg msg_ ->
+            updateSettings msg_ model
 
 
 updateSettings : Settings.Msg -> Model -> ( Model, Cmd Msg )
@@ -117,8 +116,8 @@ updateSettings msg model =
 
         cmd =
             case outMsg of
-                Just (Settings.Api cmd') ->
-                    [ townServerCmd model cmd' ]
+                Just (Settings.Api cmd_) ->
+                    [ townServerCmd model cmd_ ]
 
                 Nothing ->
                     []
@@ -190,13 +189,13 @@ syncButton model =
 
 drawer : Model -> List (Html Msg)
 drawer model =
-    [ Html.App.map UpdateSettingsPage <| SettingsPage.view model.settings model.settingsPage
+    [ Html.map UpdateSettingsPage <| SettingsPage.view model.settings model.settingsPage
     ]
 
 
 body : Model -> List (Html Msg)
 body model =
-    [ Html.App.map UpdateTownPage <| TownPage.view model.town model.townPage
+    [ Html.map UpdateTownPage <| TownPage.view model.town model.townPage
     , text model.errorMsg
     ]
 
@@ -205,9 +204,9 @@ body model =
 -- MAIN
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Html.App.program
+    Html.program
         { init = update Synchronize init
         , view = view
         , subscriptions = subscriptions

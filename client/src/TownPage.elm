@@ -12,9 +12,13 @@ import Material.Color as Color
 import Material.Elevation as Elevation
 import Material.Icon as Icon
 import Material.Options as Options
-import Parts exposing (Index)
+import Parts
 import Town
 import TownApi
+
+
+type alias Index =
+    Parts.Index (List Int)
 
 
 type alias Model =
@@ -46,17 +50,17 @@ update msg model =
     case msg of
         Expand buildingId ->
             let
-                model =
+                newModel =
                     { model | expanded = Just buildingId }
             in
-                ( model, Cmd.none, Nothing )
+                ( newModel, Cmd.none, Nothing )
 
         Collapse ->
             let
-                model =
+                newModel =
                     { model | expanded = Nothing }
             in
-                ( model, Cmd.none, Nothing )
+                ( newModel, Cmd.none, Nothing )
 
         SetBuildingColor id color ->
             let
@@ -65,12 +69,12 @@ update msg model =
             in
                 ( model, Cmd.none, Just outMsg )
 
-        Mdl msg' ->
+        Mdl mdlMsg ->
             let
-                ( model, cmd ) =
-                    Material.update msg' model
+                ( newModel, cmd ) =
+                    Material.update mdlMsg model
             in
-                ( model, cmd, Nothing )
+                ( newModel, cmd, Nothing )
 
 
 view : Town.Model -> Model -> Html Msg
@@ -177,6 +181,6 @@ rainbow count =
         delta =
             360 / (toFloat count) |> degrees
     in
-        [0..count - 1]
+        List.range 0 (count - 1)
             |> List.map (\i -> (toFloat i) * delta)
             |> List.map (\hue -> hsl hue 1.0 0.5)

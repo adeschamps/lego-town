@@ -7,8 +7,13 @@ import Material.Layout as Layout
 import Material.Options as Options
 import Material.Textfield as Textfield
 import Maybe exposing (andThen)
-import Parts exposing (Index)
+import Parts
 import Settings
+
+
+type alias Index =
+    Parts.Index (List Int)
+
 
 
 -- MODEL
@@ -97,12 +102,12 @@ update msg model =
             in
                 ( newModel, Cmd.none, outMsg )
 
-        Mdl msg' ->
+        Mdl mdlMsg ->
             let
-                ( model, cmd ) =
-                    Material.update msg' model
+                ( newModel, cmd ) =
+                    Material.update mdlMsg model
             in
-                ( model, cmd, Nothing )
+                ( newModel, cmd, Nothing )
 
 
 

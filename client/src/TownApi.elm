@@ -44,7 +44,7 @@ buildingId =
 
 msg : Decoder Msg
 msg =
-    ("type" := string) `andThen` subMsg
+    (field "type" string) |> andThen subMsg
 
 
 subMsg : String -> Decoder Msg
@@ -52,13 +52,13 @@ subMsg msgType =
     case msgType of
         "state" ->
             succeed State
-                |: ("arduinoAddress" := string)
-                |: ("buildings" := list buildingInfo)
+                |: (field "arduinoAddress" string)
+                |: (field "buildings" (list buildingInfo))
 
         "setLights" ->
             succeed SetLights
-                |: ("buildingId" := buildingId)
-                |: ("lights" := list lightState)
+                |: (field "buildingId" buildingId)
+                |: (field "lights" (list lightState))
 
         _ ->
             fail ("invalid message type: " ++ msgType)
@@ -67,25 +67,30 @@ subMsg msgType =
 buildingInfo : Decoder BuildingInfo
 buildingInfo =
     succeed BuildingInfo
-        |: ("buildingId" := int)
-        |: ("name" := string)
-        |: ("lights" := list lightState)
+        |: (field "buildingId" int)
+        |: (field "name" string)
+        |: (field "lights" (list lightState))
 
 
 lightState : Decoder LightState
 lightState =
     succeed LightState
-        |: ("lightId" := int)
-        |: ("color" := color)
+        |: (field "lightId" int)
+        |: (field "color" color)
 
 
 color : Decoder Color
 color =
     let
         decodeColor c =
-            hexToColor c |> fromMaybe ("Invalid color: " ++ c)
+            case hexToColor c of
+                Just color ->
+                    succeed color
+
+                Nothing ->
+                    fail ("Invalid color: " ++ c)
     in
-        customDecoder string decodeColor
+        string |> andThen decodeColor
 
 
 
