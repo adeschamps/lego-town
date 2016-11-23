@@ -5,7 +5,6 @@ import Color.Convert exposing (..)
 import Json.Encode as Enc
 import Json.Decode exposing (..)
 import Json.Decode.Extra exposing (..)
-import Result exposing (fromMaybe)
 
 
 -- INCOMING MESSAGES
