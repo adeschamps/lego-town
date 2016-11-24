@@ -21,24 +21,23 @@ view model =
         model.mdl
         [ Layout.fixedHeader
         ]
-        { header = header model
-        , drawer = drawer model
+        { header = [ header model ]
+        , drawer = [ drawer model ]
         , tabs = ( [], [] )
         , main = body model
         }
         |> Material.Scheme.topWithScheme Color.Blue Color.LightGreen
 
 
-header : Model -> List (Html Msg)
+header : Model -> Html Msg
 header model =
-    [ Layout.row []
+    Layout.row []
         [ Layout.title [] [ text "LEGO Town" ]
         , Layout.spacer
         , Layout.navigation []
             [ syncButton model
             ]
         ]
-    ]
 
 
 syncButton : Model -> Html Msg
@@ -48,10 +47,24 @@ syncButton model =
         [ text "Sync" ]
 
 
-drawer : Model -> List (Html Msg)
-drawer model =
-    [ Html.map UpdateSettingsPage <| SettingsPage.view model.settings model.settingsPage
+settingsInfo : Model -> List (SettingsPage.SettingConfig Msg)
+settingsInfo model =
+    [ { id = 0
+      , label = "Server Url"
+      , value = model.settings.serverUrl
+      , onChange = SetServerUrl
+      }
+    , { id = 1
+      , label = "Arduino Url"
+      , value = model.settings.arduinoUrl
+      , onChange = SetArduinoUrl
+      }
     ]
+
+
+drawer : Model -> Html Msg
+drawer model =
+    settingsInfo model |> SettingsPage.view Mdl [] model.mdl model.settingsPage SettingsPageMsg
 
 
 body : Model -> List (Html Msg)

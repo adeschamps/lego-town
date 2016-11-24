@@ -1,5 +1,14 @@
 module TownPage exposing (Model, Msg, OutMsg(..), init, update, view)
 
+-- LOCAL
+
+import Parts
+import Town
+import TownApi
+
+
+-- EXTERNAL
+
 import Color as StdColor exposing (hsl)
 import Color.Convert exposing (colorToHex)
 import Dict
@@ -12,9 +21,6 @@ import Material.Color as Color
 import Material.Elevation as Elevation
 import Material.Icon as Icon
 import Material.Options as Options
-import Parts
-import Town
-import TownApi
 
 
 type alias Index =

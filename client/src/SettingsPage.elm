@@ -1,14 +1,14 @@
-module SettingsPage exposing (Model, Msg, OutMsg(..), init, update, view)
+module SettingsPage exposing (init, update, view, State, Msg, SettingConfig)
+
+-- EXTERNAL
 
 import Html exposing (..)
-import List.Extra as List
 import Material
 import Material.Layout as Layout
 import Material.Options as Options
 import Material.Textfield as Textfield
 import Maybe exposing (andThen)
 import Parts
-import Settings
 
 
 type alias Index =
@@ -19,51 +19,27 @@ type alias Index =
 -- MODEL
 
 
-type alias Mdl =
-    Material.Model
-
-
-type alias Model =
-    { editing : Maybe SettingElement
-    , inputValue : Maybe String
-    , mdl : Material.Model
+type alias State =
+    { editing :
+        Maybe
+            { id : Int
+            , value : String
+            }
     }
 
 
-init : Model
+init : State
 init =
     { editing = Nothing
-    , inputValue = Nothing
-    , mdl = Material.model
     }
 
 
-type SettingElement
-    = TownUrl
-    | ArduinoUrl
-
-
-type alias SettingInfo =
-    { element : SettingElement
+type alias SettingConfig msg =
+    { id : Int
     , label : String
-    , getValue : Settings.Model -> String
-    , saveMessage : String -> Settings.Msg
+    , value : String
+    , onChange : String -> msg
     }
-
-
-settingInfo : List SettingInfo
-settingInfo =
-    [ { element = TownUrl
-      , label = "Town URL"
-      , getValue = .townUrl
-      , saveMessage = Settings.SetTownUrl
-      }
-    , { element = ArduinoUrl
-      , label = "Arduino URL"
-      , getValue = .arduinoUrl
-      , saveMessage = Settings.SetArduinoUrl
-      }
-    ]
 
 
 
@@ -71,82 +47,91 @@ settingInfo =
 
 
 type Msg
-    = BeginEditing SettingElement
+    = BeginEditing Int String
     | UpdateValue String
-    | EndEditing SettingElement
-    | Mdl (Material.Msg Msg)
+    | EndEditing
 
 
-type OutMsg
-    = SettingsMsg Settings.Msg
-
-
-update : Msg -> Model -> ( Model, Cmd Msg, Maybe OutMsg )
-update msg model =
+update : Msg -> State -> State
+update msg state =
     case msg of
-        BeginEditing element ->
-            ( { model | editing = Just element }, Cmd.none, Nothing )
+        BeginEditing id value ->
+            { state | editing = Just { id = id, value = value } }
 
         UpdateValue value ->
-            ( { model | inputValue = Just value }, Cmd.none, Nothing )
-
-        EndEditing element ->
             let
-                newModel =
-                    { model | editing = Nothing, inputValue = Nothing }
+                newEditing =
+                    case state.editing of
+                        Just editing ->
+                            Just { editing | value = value }
 
-                outMsg =
-                    settingInfo
-                        |> List.find (\i -> i.element == element)
-                        |> Maybe.map2 (\value i -> i.saveMessage value |> SettingsMsg) model.inputValue
+                        Nothing ->
+                            Nothing
             in
-                ( newModel, Cmd.none, outMsg )
+                { state | editing = newEditing }
 
-        Mdl mdlMsg ->
-            let
-                ( newModel, cmd ) =
-                    Material.update mdlMsg model
-            in
-                ( newModel, cmd, Nothing )
+        EndEditing ->
+            { state | editing = Nothing }
 
 
 
 -- VIEW
 
 
-view : Settings.Model -> Model -> Html Msg
-view settings model =
+view :
+    (Parts.Msg Material.Model msg -> msg)
+    -> Index
+    -> Material.Model
+    -> State
+    -> (Msg -> msg)
+    -> List (SettingConfig msg)
+    -> Html msg
+view wrap index mdl state parent settings =
     let
-        setting i info =
-            viewSetting settings model (i :: []) info
+        viewSetting i config =
+            setting wrap (i :: index) mdl state parent config
     in
         Options.div []
             [ Layout.title [] [ text "Settings" ]
-            , Options.div [] <| List.indexedMap setting <| settingInfo
+            , Options.div [] <| List.indexedMap viewSetting <| settings
             ]
 
 
-viewSetting : Settings.Model -> Model -> Index -> SettingInfo -> Html Msg
-viewSetting settings model index info =
+setting :
+    (Parts.Msg Material.Model msg -> msg)
+    -> Index
+    -> Material.Model
+    -> State
+    -> (Msg -> msg)
+    -> SettingConfig msg
+    -> Html msg
+setting wrap index mdl state parent config =
     let
-        editing =
-            model.editing == Just info.element
+        id =
+            config.id
 
-        value =
-            case ( editing, model.inputValue ) of
-                ( True, Just value ) ->
-                    value
+        ( editing, value ) =
+            let
+                default =
+                    ( False, config.value )
+            in
+                case state.editing of
+                    Just editing ->
+                        if editing.id == id then
+                            ( True, editing.value )
+                        else
+                            default
 
-                ( _, _ ) ->
-                    info.getValue settings
+                    Nothing ->
+                        default
     in
-        Textfield.render Mdl
+        Textfield.render wrap
             (0 :: index)
-            model.mdl
+            mdl
             [ Textfield.floatingLabel
-            , Textfield.label info.label
-            , Textfield.value value
-            , Textfield.onFocus <| BeginEditing info.element
-            , Textfield.onInput UpdateValue
-            , Textfield.onBlur <| EndEditing info.element
+            , Textfield.label <| config.label
+            , Textfield.value <| value
+            , Textfield.onFocus <| parent <| BeginEditing config.id config.value
+            , Textfield.onInput (parent << UpdateValue)
+            , Textfield.onBlur <| config.onChange value
             ]
