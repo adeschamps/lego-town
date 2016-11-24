@@ -2,11 +2,10 @@ module Model exposing (..)
 
 -- LOCAL
 
-import Settings
-import SettingsPage
 import Town
 import TownApi
 import TownPage
+import SettingsPage
 
 
 --EXTERNAL
@@ -23,20 +22,31 @@ import WebSocket
 
 type alias Model =
     { town : Town.Model
-    , settings : Settings.Model
+    , settings : Settings
     , townPage : TownPage.Model
-    , settingsPage : SettingsPage.Model
+    , settingsPage : SettingsPage.State
     , errorMsg : String
     , mdl : Material.Model
+    }
+
+
+type alias Settings =
+    { serverUrl : String
+    , arduinoUrl : String
     }
 
 
 init : ( Model, Cmd Msg )
 init =
     let
+        settings =
+            { serverUrl = "ws://192.168.1.136:1234"
+            , arduinoUrl = ""
+            }
+
         model =
             { town = Town.init
-            , settings = Settings.init
+            , settings = settings
             , townPage = TownPage.init
             , settingsPage = SettingsPage.init
             , errorMsg = ""
@@ -44,7 +54,7 @@ init =
             }
 
         cmd =
-            Cmd.none
+            townServerCmd model TownApi.getState
     in
         ( model, cmd )
 
@@ -55,17 +65,52 @@ init =
 
 type Msg
     = Synchronize
+      -- Settings
+    | SetServerUrl String
+    | SetArduinoUrl String
+    | SettingsPageMsg SettingsPage.Msg
+      -- Town
     | UpdateTownPage TownPage.Msg
-    | UpdateSettingsPage SettingsPage.Msg
     | TownServerMsg String
+      -- UI
     | Mdl (Material.Msg Msg)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg ({ settings } as model) =
     case msg of
         Synchronize ->
             model ! [ townServerCmd model TownApi.getState ]
+
+        SetServerUrl url ->
+            let
+                newModel =
+                    { model | settings = { settings | serverUrl = url } }
+            in
+                newModel ! []
+
+        SetArduinoUrl url ->
+            let
+                newModel =
+                    { model | settings = { settings | arduinoUrl = url } }
+
+                cmd =
+                    TownApi.setArduinoAddress url |> townServerCmd model
+            in
+                ( newModel, cmd )
+
+        SettingsPageMsg pageMsg ->
+            let
+                settingsPage =
+                    model.settingsPage
+
+                newSettingsPage =
+                    SettingsPage.update pageMsg settingsPage
+
+                newModel =
+                    { model | settingsPage = newSettingsPage }
+            in
+                newModel ! []
 
         UpdateTownPage msg_ ->
             TownPage.update msg_ model.townPage
@@ -73,13 +118,6 @@ update msg model =
                     (\newTownPage -> { model | townPage = newTownPage })
                 |> OutMessage.mapCmd UpdateTownPage
                 |> OutMessage.evaluateMaybe handleTownMsg Cmd.none
-
-        UpdateSettingsPage msg_ ->
-            SettingsPage.update msg_ model.settingsPage
-                |> OutMessage.mapComponent
-                    (\newSettingsPage -> { model | settingsPage = newSettingsPage })
-                |> OutMessage.mapCmd UpdateSettingsPage
-                |> OutMessage.evaluateMaybe handleSettingsMsg Cmd.none
 
         TownServerMsg payload ->
             case Json.Decode.decodeString TownApi.msg payload of
@@ -98,30 +136,6 @@ handleTownMsg msg model =
     case msg of
         TownPage.Api apiMsg ->
             model ! [ townServerCmd model apiMsg ]
-
-
-handleSettingsMsg : SettingsPage.OutMsg -> Model -> ( Model, Cmd Msg )
-handleSettingsMsg msg model =
-    case msg of
-        SettingsPage.SettingsMsg msg_ ->
-            updateSettings msg_ model
-
-
-updateSettings : Settings.Msg -> Model -> ( Model, Cmd Msg )
-updateSettings msg model =
-    let
-        ( newSettings, outMsg ) =
-            Settings.update msg model.settings
-
-        cmd =
-            case outMsg of
-                Just (Settings.Api cmd_) ->
-                    [ townServerCmd model cmd_ ]
-
-                Nothing ->
-                    []
-    in
-        { model | settings = newSettings } ! cmd
 
 
 handleTownServerMsg : TownApi.Msg -> Model -> ( Model, Cmd Msg )
@@ -146,7 +160,7 @@ handleTownServerMsg msg model =
 
 townServerCmd : Model -> Json.Encode.Value -> Cmd Msg
 townServerCmd model value =
-    WebSocket.send model.settings.townUrl (Json.Encode.encode 0 value)
+    WebSocket.send model.settings.serverUrl (Json.Encode.encode 0 value)
 
 
 
@@ -155,4 +169,4 @@ townServerCmd model value =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    WebSocket.listen model.settings.townUrl TownServerMsg
+    WebSocket.listen model.settings.serverUrl TownServerMsg
