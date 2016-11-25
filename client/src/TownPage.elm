@@ -21,6 +21,7 @@ import Material.Color as Color
 import Material.Elevation as Elevation
 import Material.Icon as Icon
 import Material.Options as Options
+import Util exposing (colorPicker)
 
 
 type alias Context =
@@ -155,40 +156,3 @@ mainColor building =
 
             _ ->
                 hsl 0 0 0
-
-
-
--- UTIL
--- TODO: Move these to another module
--- Creates a list of buttons which emit a message when clicked.
-
-
-colorPicker : Context -> (StdColor.Color -> Msg) -> Html Msg
-colorPicker context onClick =
-    let
-        makeButton i color =
-            (Button.render |> withIndex context i)
-                [ Button.icon
-                , Button.ripple
-                , Color.text Color.white
-                , Button.onClick <| onClick color
-                , Options.css "backgroundColor" (colorToHex color)
-                ]
-                [ Icon.i "lightbulb_outline" ]
-    in
-        rainbow 6 |> List.indexedMap makeButton |> Options.div []
-
-
-
--- Returns a list of colours evenly distributed around the hue circle.
-
-
-rainbow : Int -> List StdColor.Color
-rainbow count =
-    let
-        delta =
-            360 / (toFloat count) |> degrees
-    in
-        List.range 0 (count - 1)
-            |> List.map (\i -> (toFloat i) * delta)
-            |> List.map (\hue -> hsl hue 1.0 0.5)
