@@ -2,7 +2,6 @@ module TownPage exposing (Model, Msg, OutMsg(..), init, update, view)
 
 -- LOCAL
 
-import Parts
 import Town
 import TownApi
 
@@ -11,6 +10,7 @@ import TownApi
 
 import Color as StdColor exposing (hsl)
 import Color.Convert exposing (colorToHex)
+import Context exposing (Context, child, with, withIndex)
 import Dict
 import Html exposing (..)
 import List.Extra as List
@@ -23,8 +23,8 @@ import Material.Icon as Icon
 import Material.Options as Options
 
 
-type alias Index =
-    Parts.Index (List Int)
+type alias Context =
+    Context.Context Material.Model Msg
 
 
 type alias Model =
@@ -85,25 +85,31 @@ update msg model =
 
 view : Town.Model -> Model -> Html Msg
 view town model =
-    Options.div [] <|
-        List.map (\( k, b ) -> viewBuilding (k :: []) model b) <|
-            Dict.toList town.buildings
+    let
+        context =
+            Context.init Mdl model.mdl
+    in
+        Options.div [] <|
+            List.map (\( k, b ) -> (viewBuilding (child context k) model b)) <|
+                Dict.toList town.buildings
 
 
-viewBuilding : Index -> Model -> Town.Building -> Html Msg
-viewBuilding index model building =
+viewBuilding : Context -> Model -> Town.Building -> Html Msg
+viewBuilding context model building =
     let
         expanded =
             model.expanded == Just building.id
 
         expandButton =
-            viewExpandButton (0 :: index) model.mdl expanded building.id
+            viewExpandButton (child context 0) expanded building.id
 
         advancedActions =
-            colorPicker (1 :: index) model.mdl (SetBuildingColor building.id)
+            colorPicker (child context 1) (SetBuildingColor building.id)
 
         offButton =
-            Button.render Mdl (2 :: index) model.mdl [ Button.onClick <| SetBuildingColor building.id <| hsl 0 0 0 ] [ text "Off" ]
+            (Button.render |> withIndex context 2)
+                [ Button.onClick <| SetBuildingColor building.id <| hsl 0 0 0 ]
+                [ text "Off" ]
     in
         Card.view
             [ Elevation.e2
@@ -117,8 +123,8 @@ viewBuilding index model building =
             ]
 
 
-viewExpandButton : Index -> Material.Model -> Bool -> Town.BuildingId -> Html Msg
-viewExpandButton index mdl expanded buildingId =
+viewExpandButton : Context -> Bool -> Town.BuildingId -> Html Msg
+viewExpandButton context expanded buildingId =
     let
         ( icon, onClick ) =
             if expanded then
@@ -126,9 +132,7 @@ viewExpandButton index mdl expanded buildingId =
             else
                 ( "expand_more", Expand buildingId )
     in
-        Button.render Mdl
-            (0 :: index)
-            mdl
+        (Button.render |> withIndex context 0)
             [ Button.icon
             , Button.ripple
             , Button.onClick onClick
@@ -159,13 +163,11 @@ mainColor building =
 -- Creates a list of buttons which emit a message when clicked.
 
 
-colorPicker : Index -> Material.Model -> (StdColor.Color -> Msg) -> Html Msg
-colorPicker index mdl onClick =
+colorPicker : Context -> (StdColor.Color -> Msg) -> Html Msg
+colorPicker context onClick =
     let
         makeButton i color =
-            Button.render Mdl
-                (i :: index)
-                mdl
+            (Button.render |> withIndex context i)
                 [ Button.icon
                 , Button.ripple
                 , Color.text Color.white

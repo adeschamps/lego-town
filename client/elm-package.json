@@ -8,6 +8,7 @@
     ],
     "exposed-modules": [],
     "dependencies": {
+        "adeschamps/mdl-context": "1.0.0 <= v < 2.0.0",
         "MichaelCombs28/elm-mdl": "1.0.1 <= v < 2.0.0",
         "MichaelCombs28/elm-parts": "1.0.0 <= v < 2.0.0",
         "elm-community/dict-extra": "1.3.0 <= v < 2.0.0",

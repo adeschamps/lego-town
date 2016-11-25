@@ -2,17 +2,17 @@ module SettingsPage exposing (init, update, view, State, Msg, SettingConfig)
 
 -- EXTERNAL
 
+import Context exposing (child, with, withIndex)
 import Html exposing (..)
 import Material
 import Material.Layout as Layout
 import Material.Options as Options
 import Material.Textfield as Textfield
 import Maybe exposing (andThen)
-import Parts
 
 
-type alias Index =
-    Parts.Index (List Int)
+type alias Context msg =
+    Context.Context Material.Model msg
 
 
 
@@ -79,33 +79,29 @@ update msg state =
 
 
 view :
-    (Parts.Msg Material.Model msg -> msg)
-    -> Index
-    -> Material.Model
+    Context msg
     -> State
     -> (Msg -> msg)
     -> List (SettingConfig msg)
     -> Html msg
-view wrap index mdl state parent settings =
+view context state parent settings =
     let
-        viewSetting i config =
-            setting wrap (i :: index) mdl state parent config
+        setting i config =
+            viewSetting (child context i) state parent config
     in
         Options.div []
             [ Layout.title [] [ text "Settings" ]
-            , Options.div [] <| List.indexedMap viewSetting <| settings
+            , Options.div [] <| List.indexedMap setting <| settings
             ]
 
 
-setting :
-    (Parts.Msg Material.Model msg -> msg)
-    -> Index
-    -> Material.Model
+viewSetting :
+    Context msg
     -> State
     -> (Msg -> msg)
     -> SettingConfig msg
     -> Html msg
-setting wrap index mdl state parent config =
+viewSetting context state parent config =
     let
         id =
             config.id
@@ -125,9 +121,7 @@ setting wrap index mdl state parent config =
                     Nothing ->
                         default
     in
-        Textfield.render wrap
-            (0 :: index)
-            mdl
+        (Textfield.render |> withIndex context 0)
             [ Textfield.floatingLabel
             , Textfield.label <| config.label
             , Textfield.value <| value
