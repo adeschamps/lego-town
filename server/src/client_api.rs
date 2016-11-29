@@ -1,5 +1,7 @@
 extern crate rustc_serialize;
 
+use messages;
+
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder, EncoderHelpers};
 use std::net::{SocketAddr, ToSocketAddrs};
 
@@ -9,13 +11,13 @@ pub enum Msg {
 
     SetBuilding {
         building_id: u8,
-        color: String
+        color: messages::Color
     },
 
     SetLight {
         building_id: u8,
         light_id: u8,
-        color: String
+        color: messages::Color
     },
 
     SetArduinoAddress {
@@ -38,7 +40,7 @@ impl Decodable for Msg {
                             building_id:
                                 d.read_struct_field("buildingId", 0, D::read_u8)?,
                             color:
-                                d.read_struct_field("color", 1, D::read_str)?
+                                d.read_struct_field("color", 1, messages::Color::decode)?
                         }
                     }
 
@@ -49,7 +51,7 @@ impl Decodable for Msg {
                             light_id:
                                 d.read_struct_field("lightId", 1, D::read_u8)?,
                             color:
-                                d.read_struct_field("color", 2, D::read_str)?
+                                d.read_struct_field("color", 2, messages::Color::decode)?
                         }
                     }
 
@@ -87,8 +89,9 @@ pub struct Building {
 
 pub struct Light {
     pub id: u8,
-    pub color: String
+    pub color: messages::Color
 }
+
 
 impl Encodable for Response {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
@@ -112,6 +115,7 @@ impl Encodable for Response {
         }
     }
 }
+
 
 impl Encodable for Building {
     fn encode<S:Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
@@ -139,7 +143,7 @@ impl Encodable for Light {
                 s.emit_u8(self.id)
             })?;
             s.emit_struct_field("color", 1, |s| {
-                s.emit_str(self.color.as_str())
+                self.color.encode(s)
             })?;
             Ok(())
         })
@@ -147,12 +151,49 @@ impl Encodable for Light {
 }
 
 
+impl Decodable for messages::Color {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
+        d.read_str().and_then(|color| Ok(match color.as_str() {
+            "OFF" => messages::Color::OFF,
+            "WHITE" => messages::Color::WHITE,
+            "RED" => messages::Color::RED,
+            "ORANGE" => messages::Color::ORANGE,
+            "YELLOW" => messages::Color::YELLOW,
+            "GREEN" => messages::Color::GREEN,
+            "CYAN" => messages::Color::CYAN,
+            "BLUE" => messages::Color::BLUE,
+            "PURPLE" => messages::Color::PURPLE,
+            "MAGENTA" => messages::Color::MAGENTA,
+            _ => return Err(d.error(format!("Invalid color: {}", color.as_str()).as_str()))
+        }))
+    }
+}
+
+
+impl Encodable for messages::Color {
+    fn encode<S:Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        s.emit_str(match *self {
+            messages::Color::OFF => "OFF",
+            messages::Color::WHITE => "WHITE",
+            messages::Color::RED => "RED",
+            messages::Color::ORANGE => "ORANGE",
+            messages::Color::YELLOW => "YELLOW",
+            messages::Color::GREEN => "GREEN",
+            messages::Color::CYAN => "CYAN",
+            messages::Color::BLUE => "BLUE",
+            messages::Color::PURPLE => "PURPLE",
+            messages::Color::MAGENTA => "MAGENTA"
+        })
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use messages;
     use rustc_serialize::json;
     use std::net::{ToSocketAddrs};
+    use super::*;
 
     #[test]
     fn decode_init() {
@@ -164,23 +205,23 @@ mod tests {
 
     #[test]
     fn decode_set_building() {
-        let msg = r##"{"type":"setBuilding","buildingId":0,"color":"#ff0000"}"##;
+        let msg = r##"{"type":"setBuilding","buildingId":0,"color":"RED"}"##;
         let msg : Msg = json::decode(msg).unwrap();
         let expected = Msg::SetBuilding{
             building_id: 0,
-            color: "#ff0000".to_string()
+            color: messages::Color::RED
         };
         assert_eq!(msg, expected);
     }
 
     #[test]
     fn decode_set_light() {
-        let msg = r##"{"type":"setLight","buildingId":0,"lightId":1,"color":"#ff0000"}"##;
+        let msg = r##"{"type":"setLight","buildingId":0,"lightId":1,"color":"RED"}"##;
         let msg : Msg = json::decode(msg).unwrap();
         let expected = Msg::SetLight{
             building_id: 0,
             light_id: 1,
-            color: "#ff0000".to_string()
+            color: messages::Color::RED
         };
         assert_eq!(msg, expected);
     }
@@ -222,10 +263,10 @@ mod tests {
     fn encode_light() {
         let light = Light {
             id: 0,
-            color: "#ff0000".to_string()
+            color: messages::Color::RED
         };
         let light = json::encode(&light).unwrap();
-        let expected = r##"{"lightId":0,"color":"#ff0000"}"##;
+        let expected = r##"{"lightId":0,"color":"RED"}"##;
         assert_eq!(light, expected);
     }
 

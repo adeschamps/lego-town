@@ -68,7 +68,21 @@ void LightController::handle_messages()
 
 sf::Color parseColor(light_controller::Color const & color)
 {
-  return sf::Color(color.red(), color.green(), color.blue());
+  using namespace light_controller;
+  switch (color)
+  {
+  case OFF:     return sf::Color(  0,   0,   0);
+  case WHITE:   return sf::Color(255, 255, 255);
+  case RED:     return sf::Color(255,   0,   0);
+  case ORANGE:  return sf::Color(255, 128,   0);
+  case YELLOW:  return sf::Color(255, 255,   0);
+  case GREEN:   return sf::Color(  0, 255,   0);
+  case CYAN:    return sf::Color(  0, 255, 255);
+  case BLUE:    return sf::Color(  0,   0, 255);
+  case PURPLE:  return sf::Color(128,   0, 255);
+  case MAGENTA: return sf::Color(255,   0, 255);
+  default: return sf::Color(100, 100, 100);
+  }
 }
 
 

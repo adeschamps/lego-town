@@ -1,7 +1,6 @@
 module Town exposing (..)
 
 import TownApi
-import Color exposing (Color)
 import Dict exposing (Dict)
 import Dict.Extra as Dict
 
@@ -31,7 +30,7 @@ type alias Building =
 
 type alias Light =
     { id : LightId
-    , color : Color
+    , color : TownApi.Color
     }
 
 

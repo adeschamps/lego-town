@@ -3,29 +3,29 @@
     {
       "name": "Cafe Corner",
       "lights": [
-        { "color": "#ff0000" },
-        { "color": "#ff0000" }
+        { "color": "RED" },
+        { "color": "RED" }
       ]
     },
     {
       "name": "Green Grocer",
       "lights": [
-        { "color": "#00ff00" },
-        { "color": "#00ff00" }
+        { "color": "GREEN" },
+        { "color": "GREEN" }
       ]
     },
     {
       "name": "Fire Brigade",
       "lights": [
-        { "color": "#0000ff" },
-        { "color": "#0000ff" }
+        { "color": "BLUE" },
+        { "color": "BLUE" }
       ]
     },
     {
       "name": "Grand Emporium",
       "lights": [
-        { "color": "#ff00ff" },
-        { "color": "#ff00ff" }
+        { "color": "YELLOW" },
+        { "color": "YELLOW" }
       ]
     }
   ]
