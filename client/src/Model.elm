@@ -26,6 +26,7 @@ type alias Model =
     , townPage : TownPage.Model
     , settingsPage : SettingsPage.State
     , errorMsg : String
+    , useMdlScheme : Bool
     , mdl : Material.Model
     }
 
@@ -50,6 +51,7 @@ init =
             , townPage = TownPage.init
             , settingsPage = SettingsPage.init
             , errorMsg = ""
+            , useMdlScheme = True
             , mdl = Material.model
             }
 
@@ -73,6 +75,7 @@ type Msg
     | UpdateTownPage TownPage.Msg
     | TownServerMsg String
       -- UI
+    | ToggleMdlScheme
     | Mdl (Material.Msg Msg)
 
 
@@ -126,6 +129,9 @@ update msg ({ settings } as model) =
 
                 Ok msg ->
                     handleTownServerMsg msg model
+
+        ToggleMdlScheme ->
+            { model | useMdlScheme = not model.useMdlScheme } ! []
 
         Mdl msg_ ->
             Material.update msg_ model

@@ -26,6 +26,14 @@ view model =
     let
         context =
             Context.init Mdl model.mdl
+
+        scheme =
+            case model.useMdlScheme of
+                True ->
+                    Material.Scheme.topWithScheme Color.Blue Color.LightGreen
+
+                False ->
+                    identity
     in
         (Layout.render |> with context)
             [ Layout.fixedHeader
@@ -35,7 +43,7 @@ view model =
             , tabs = ( [], [] )
             , main = body (child context 1) model
             }
-            |> Material.Scheme.topWithScheme Color.Blue Color.LightGreen
+            |> scheme
 
 
 header : Model -> Html Msg
@@ -44,16 +52,24 @@ header model =
         [ Layout.title [] [ text "LEGO Town" ]
         , Layout.spacer
         , Layout.navigation []
-            [ syncButton model
+            [ syncButton
+            , toggleSchemeButton
             ]
         ]
 
 
-syncButton : Model -> Html Msg
-syncButton model =
+syncButton : Html Msg
+syncButton =
     Layout.link
         [ Layout.onClick Synchronize ]
         [ text "Sync" ]
+
+
+toggleSchemeButton : Html Msg
+toggleSchemeButton =
+    Layout.link
+        [ Layout.onClick ToggleMdlScheme ]
+        [ text "Toggle CSS" ]
 
 
 settingsInfo : Model -> List (SettingsPage.SettingConfig Msg)
