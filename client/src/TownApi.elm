@@ -1,7 +1,5 @@
 module TownApi exposing (..)
 
-import Color exposing (Color)
-import Color.Convert exposing (..)
 import Json.Encode as Enc
 import Json.Decode exposing (..)
 import Json.Decode.Extra exposing (..)
@@ -30,6 +28,19 @@ type alias LightState =
     { lightId : Int
     , color : Color
     }
+
+
+type Color
+    = OFF
+    | WHITE
+    | RED
+    | ORANGE
+    | YELLOW
+    | GREEN
+    | CYAN
+    | BLUE
+    | PURPLE
+    | MAGENTA
 
 
 
@@ -82,11 +93,38 @@ color : Decoder Color
 color =
     let
         decodeColor c =
-            case hexToColor c of
-                Just color ->
-                    succeed color
+            case c of
+                "OFF" ->
+                    succeed OFF
 
-                Nothing ->
+                "WHITE" ->
+                    succeed WHITE
+
+                "RED" ->
+                    succeed RED
+
+                "ORANGE" ->
+                    succeed ORANGE
+
+                "YELLOW" ->
+                    succeed YELLOW
+
+                "GREEN" ->
+                    succeed GREEN
+
+                "CYAN" ->
+                    succeed CYAN
+
+                "BLUE" ->
+                    succeed BLUE
+
+                "PURPLE" ->
+                    succeed PURPLE
+
+                "MAGENTA" ->
+                    succeed MAGENTA
+
+                _ ->
                     fail ("Invalid color: " ++ c)
     in
         string |> andThen decodeColor
@@ -137,5 +175,72 @@ setArduinoAddress address =
 
 
 encColor : Color -> Value
-encColor =
-    Enc.string << colorToHex
+encColor color =
+    let
+        colorName =
+            case color of
+                OFF ->
+                    "OFF"
+
+                WHITE ->
+                    "WHITE"
+
+                RED ->
+                    "RED"
+
+                ORANGE ->
+                    "ORANGE"
+
+                YELLOW ->
+                    "YELLOW"
+
+                GREEN ->
+                    "GREEN"
+
+                CYAN ->
+                    "CYAN"
+
+                BLUE ->
+                    "BLUE"
+
+                PURPLE ->
+                    "PURPLE"
+
+                MAGENTA ->
+                    "MAGENTA"
+    in
+        Enc.string colorName
+
+
+colorToHex : Color -> String
+colorToHex color =
+    case color of
+        OFF ->
+            "#000000"
+
+        WHITE ->
+            "#ffffff"
+
+        RED ->
+            "#ff0000"
+
+        ORANGE ->
+            "#ff8800"
+
+        YELLOW ->
+            "#ffff00"
+
+        GREEN ->
+            "#00ff00"
+
+        CYAN ->
+            "#00ffff"
+
+        BLUE ->
+            "#0000ff"
+
+        PURPLE ->
+            "#8800ff"
+
+        MAGENTA ->
+            "#ff00ff"

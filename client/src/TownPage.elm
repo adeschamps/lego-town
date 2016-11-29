@@ -2,14 +2,13 @@ module TownPage exposing (Model, Msg, OutMsg(..), init, update, view)
 
 -- LOCAL
 
+import ColorPicker
 import Town
 import TownApi
 
 
 -- EXTERNAL
 
-import Color as StdColor exposing (hsl)
-import Color.Convert exposing (colorToHex)
 import Context exposing (Context, child, with, withIndex)
 import Dict
 import Html exposing (..)
@@ -21,7 +20,6 @@ import Material.Color as Color
 import Material.Elevation as Elevation
 import Material.Icon as Icon
 import Material.Options as Options
-import Util exposing (colorPicker)
 
 
 type alias Context =
@@ -44,7 +42,7 @@ init =
 type Msg
     = Expand Town.BuildingId
     | Collapse
-    | SetBuildingColor Town.BuildingId StdColor.Color
+    | SetBuildingColor Town.BuildingId TownApi.Color
     | Mdl (Material.Msg Msg)
 
 
@@ -105,21 +103,16 @@ viewBuilding context model building =
             viewExpandButton (child context 0) expanded building.id
 
         advancedActions =
-            colorPicker (child context 1) (SetBuildingColor building.id)
-
-        offButton =
-            (Button.render |> withIndex context 2)
-                [ Button.onClick <| SetBuildingColor building.id <| hsl 0 0 0 ]
-                [ text "Off" ]
+            ColorPicker.view (SetBuildingColor building.id)
     in
         Card.view
             [ Elevation.e2
-            , Options.css "backgroundColor" (colorToHex <| mainColor building)
+            , Options.css "backgroundColor" (TownApi.colorToHex <| mainColor building)
               --            , Color.background <| Color.color model.hue Color.S500
             ]
             [ Card.title [] [ Card.head [ Color.text Color.white ] [ text building.name ] ]
               --            , Card.menu [] [ expandButton ]
-            , Card.actions [ Color.background Color.white ] [ advancedActions, offButton ]
+            , Card.actions [ Color.background Color.white ] [ advancedActions ]
               --                <| if expanded then advancedActions else []
             ]
 
@@ -142,17 +135,17 @@ viewExpandButton context expanded buildingId =
             ]
 
 
-mainColor : Town.Building -> StdColor.Color
+mainColor : Town.Building -> TownApi.Color
 mainColor building =
     let
         unique =
             building.lights
                 |> Dict.values
-                |> List.uniqueBy (.color >> colorToHex)
+                |> List.uniqueBy (.color >> TownApi.colorToHex)
     in
         case unique of
             [ light ] ->
                 light.color
 
             _ ->
-                hsl 0 0 0
+                TownApi.OFF
