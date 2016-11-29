@@ -6,7 +6,6 @@ use messages;
 
 extern crate ws;
 use protobuf::Message;
-use rustc_serialize::hex::ToHex;
 use rustc_serialize::json;
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::mpsc;
@@ -49,14 +48,9 @@ impl TownController {
                 client_api::Msg::SetLight{building_id, light_id, color} => {
                     let mut cmd = messages::Command::new();
                     let mut sl = messages::SetLight::new();
-                    let mut col = messages::Color::new();
-                    let color = read_color::rgb(color.as_str()[1..].chars().by_ref()).unwrap();
-                    col.set_red(color[0] as i32);
-                    col.set_green(color[1] as i32);
-                    col.set_blue(color[2] as i32);
                     sl.set_light_group(building_id as u32);
                     sl.set_light_id(light_id as u32);
-                    sl.set_color(col);
+                    sl.set_color(color);
                     cmd.set_set_light(sl);
                     self.send_arduino_command(cmd);
 
@@ -68,13 +62,8 @@ impl TownController {
                 client_api::Msg::SetBuilding{building_id, color} => {
                     let mut cmd = messages::Command::new();
                     let mut sg = messages::SetGroup::new();
-                    let mut col = messages::Color::new();
-                    let color = read_color::rgb(color.as_str()[1..].chars().by_ref()).unwrap();
-                    col.set_red(color[0] as i32);
-                    col.set_green(color[1] as i32);
-                    col.set_blue(color[2] as i32);
                     sg.set_light_group(building_id as u32);
-                    sg.set_color(col);
+                    sg.set_color(color);
                     cmd.set_set_group(sg);
                     self.send_arduino_command(cmd);
 
@@ -124,13 +113,9 @@ impl TownController {
 
                 let mut cmd = messages::Command::new();
                 let mut sl = messages::SetLight::new();
-                let mut col = messages::Color::new();
-                col.set_red(light.color[0] as i32);
-                col.set_green(light.color[1] as i32);
-                col.set_blue(light.color[2] as i32);
                 sl.set_light_group(building_id as u32);
                 sl.set_light_id(light_id as u32);
-                sl.set_color(col);
+                sl.set_color(light.color);
                 cmd.set_set_light(sl);
 
                 self.send_arduino_command(cmd);
@@ -146,7 +131,7 @@ impl TownController {
                 id: i as u8,
                 lights: b.lights.iter().enumerate().map(|(i,l)| client_api::Light {
                     id: i as u8,
-                    color: format!("#{}", l.color.to_hex())
+                    color: l.color
                 }).collect()
             }).collect()
         }
