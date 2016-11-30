@@ -36,7 +36,7 @@ mod protobuf {
         let manifest_dir = env::var("CARGO_MANIFEST_DIR").map_err(|e| format!("{}", e))?;
         let root = PathBuf::from(manifest_dir);
 
-        let source = root.join("../arduino-api");
+        let source = root.join("../api");
         println!("cargo:rerun-if-changed={}", source.to_str().unwrap());
 
         let out_dir = env::var("OUT_DIR").map_err(|e| format!("{}", e))?;

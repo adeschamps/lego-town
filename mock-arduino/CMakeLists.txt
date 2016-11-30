@@ -14,7 +14,7 @@ add_executable(mock-arduino
 find_package(Protobuf REQUIRED)
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ../arduino-api/messages.proto)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ../api/messages.proto)
 add_library(messages ${PROTO_SRCS})
 target_link_libraries(messages ${PROTOBUF_LIBRARIES})
 
