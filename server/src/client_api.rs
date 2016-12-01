@@ -2,21 +2,16 @@ extern crate rustc_serialize;
 
 use messages;
 
-use rustc_serialize::{Decodable, Decoder, Encodable, Encoder, EncoderHelpers};
+use rustc_serialize::{Decodable, Decoder, DecoderHelpers, Encodable, Encoder, EncoderHelpers};
 use std::net::{SocketAddr, ToSocketAddrs};
 
 #[derive(PartialEq, Debug)]
 pub enum Msg {
     GetState,
 
-    SetBuilding {
+    SetLights {
         building_id: u8,
-        color: messages::Color
-    },
-
-    SetLight {
-        building_id: u8,
-        light_id: u8,
+        light_ids: Vec<u8>,
         color: messages::Color
     },
 
@@ -35,21 +30,12 @@ impl Decodable for Msg {
                         Msg::GetState
                     }
 
-                    "setBuilding" => {
-                        Msg::SetBuilding {
+                    "setLights" => {
+                        Msg::SetLights {
                             building_id:
                                 d.read_struct_field("buildingId", 0, D::read_u8)?,
-                            color:
-                                d.read_struct_field("color", 1, messages::Color::decode)?
-                        }
-                    }
-
-                    "setLight" => {
-                        Msg::SetLight {
-                            building_id:
-                                d.read_struct_field("buildingId", 0, D::read_u8)?,
-                            light_id:
-                                d.read_struct_field("lightId", 1, D::read_u8)?,
+                            light_ids:
+                                d.read_struct_field("lightIds", 1, |d| d.read_to_vec(D::read_u8))?,
                             color:
                                 d.read_struct_field("color", 2, messages::Color::decode)?
                         }
@@ -204,23 +190,12 @@ mod tests {
     }
 
     #[test]
-    fn decode_set_building() {
-        let msg = r##"{"type":"setBuilding","buildingId":0,"color":"RED"}"##;
+    fn decode_set_lights() {
+        let msg = r##"{"type":"setLights","buildingId":0,"lightIds":[1,2,4],"color":"RED"}"##;
         let msg : Msg = json::decode(msg).unwrap();
-        let expected = Msg::SetBuilding{
+        let expected = Msg::SetLights{
             building_id: 0,
-            color: messages::Color::RED
-        };
-        assert_eq!(msg, expected);
-    }
-
-    #[test]
-    fn decode_set_light() {
-        let msg = r##"{"type":"setLight","buildingId":0,"lightId":1,"color":"RED"}"##;
-        let msg : Msg = json::decode(msg).unwrap();
-        let expected = Msg::SetLight{
-            building_id: 0,
-            light_id: 1,
+            light_ids: vec![1,2,4],
             color: messages::Color::RED
         };
         assert_eq!(msg, expected);

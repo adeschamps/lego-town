@@ -45,35 +45,20 @@ impl TownController {
                     out.send(response).unwrap();
                 }
 
-                client_api::Msg::SetLight{building_id, light_id, color} => {
-                    let mut cmd = messages::Command::new();
-                    let mut sl = messages::SetLight::new();
-                    sl.set_light_group(building_id as u32);
-                    sl.set_light_id(light_id as u32);
-                    sl.set_color(color);
-                    cmd.set_set_light(sl);
-                    self.send_arduino_command(cmd);
-
-                    let response = self.get_state();
-                    let response = json::encode(&response).unwrap();
-                    out.broadcast(response).unwrap();
-                }
-
-                client_api::Msg::SetBuilding{building_id, color} => {
-                    let mut cmd = messages::Command::new();
-                    let mut sg = messages::SetGroup::new();
-                    sg.set_light_group(building_id as u32);
-                    sg.set_color(color);
-                    cmd.set_set_group(sg);
-                    self.send_arduino_command(cmd);
-
-                    for light in &mut self.town.buildings[building_id as usize].lights {
-                        light.color = color;
+                client_api::Msg::SetLights{building_id, light_ids, color} => {
+                    for light_id in light_ids {
+                        let mut cmd = messages::Command::new();
+                        let mut sl = messages::SetLights::new();
+                        sl.set_light_group(building_id as u32);
+                        sl.set_light_id_start(light_id as u32);
+                        sl.set_light_id_end((light_id + 1) as u32);
+                        sl.set_color(color);
+                        cmd.set_set_lights(sl);
+                        self.send_arduino_command(cmd);
                     }
 
                     let response = self.get_state();
                     let response = json::encode(&response).unwrap();
-                    println!("responding: {}", response);
                     out.broadcast(response).unwrap();
                 }
 
@@ -109,17 +94,14 @@ impl TownController {
         self.send_arduino_command(cmd);
 
         for (building_id, building) in self.town.buildings.iter().enumerate() {
-            for (light_id, light) in building.lights.iter().enumerate() {
+            let mut cmd = messages::Command::new();
+            let mut sl = messages::SetLights::new();
+            sl.set_light_group(building_id as u32);
+            sl.set_light_id_start(0 as u32);
+            sl.set_light_id_end(building.lights.len() as u32);
+            cmd.set_set_lights(sl);
 
-                let mut cmd = messages::Command::new();
-                let mut sl = messages::SetLight::new();
-                sl.set_light_group(building_id as u32);
-                sl.set_light_id(light_id as u32);
-                sl.set_color(light.color);
-                cmd.set_set_light(sl);
-
-                self.send_arduino_command(cmd);
-            }
+            self.send_arduino_command(cmd);
         }
     }
 

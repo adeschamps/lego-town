@@ -4,21 +4,16 @@ package light_controller;
 
 message Command {
   oneof CommandType {
-    SetLight set_light = 1;
-    SetGroup set_group = 2;
+    SetLights set_lights = 1;
     Initialize initialize = 3;
   }
 }
 
-message SetLight {
+message SetLights {
   uint32 light_group = 1;
-  uint32 light_id = 2;
-  Color color = 3;
-}
-
-message SetGroup {
-  uint32 light_group = 1;
-  Color color = 2;
+  uint32 light_id_start = 2;
+  uint32 light_id_end = 3;
+  Color color = 4;
 }
 
 enum Color {
