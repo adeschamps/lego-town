@@ -5,6 +5,7 @@ use town;
 use messages;
 
 extern crate ws;
+use itertools::Itertools;
 use protobuf::Message;
 use rustc_serialize::json;
 use std::net::{SocketAddr, UdpSocket};
@@ -17,6 +18,105 @@ pub struct TownController {
     town: Rc<town::Town>,
     previous_town: Rc<town::Town>,
     commands: mpsc::Receiver<(client_api::Msg, ws::Sender)>
+}
+
+fn update_town(msg: client_api::Msg, mut town: &mut Rc<town::Town>) {
+    match msg {
+        client_api::Msg::GetState => {
+        }
+
+        client_api::Msg::SetLights{building_id, light_ids, color} => {
+            let mut town = Rc::make_mut(&mut town);
+            let building_id = building_id as usize;
+            if let Some(building) = town.buildings.get_mut(building_id).map(Rc::make_mut) {
+                for light_id in light_ids {
+                    if let Some(light) = building.lights.get_mut(light_id as usize).map(Rc::make_mut) {
+                        light.color = color;
+                    }
+                }
+            }
+        }
+
+        client_api::Msg::SetArduinoAddress{address} => {
+        }
+    }
+}
+
+fn coalesce_set_lights(sl_a: messages::SetLights, sl_b: messages::SetLights) -> Result<messages::SetLights, (messages::SetLights, messages::SetLights)> {
+    protobuf_bind!(sl_a, {
+        light_group: group_a,
+        light_id_start: start_a,
+        light_id_end: end_a,
+        color: color_a
+    });
+    protobuf_bind!(sl_b, {
+        light_group: group_b,
+        light_id_start: start_b,
+        light_id_end: end_b,
+        color: color_b
+    });
+    if group_a == group_b && color_a == color_b && end_a == start_b {
+        Ok(protobuf_init!(messages::SetLights::new(), {
+            light_group: group_a,
+            light_id_start: start_a,
+            light_id_end: end_b,
+            color: color_a
+        }))
+    } else {
+        Err((sl_a, sl_b))
+    }
+}
+
+fn initialization_commands(town: &town::Town) -> Vec<messages::Command> {
+    let mut cmds = Vec::new();
+
+    let init = protobuf_init!(messages::Command::new(), {
+        initialize => {
+            string_lengths: town.buildings.iter().map(|b| b.lights.len() as u32).collect()
+        }
+    });
+    cmds.push(init);
+
+    let set_lights = town.buildings.iter().enumerate().flat_map(|(building_id, building)| {
+        building.lights.iter().enumerate()
+            .map(|(light_id, light)| {
+                protobuf_init!(messages::SetLights::new(), {
+                    light_group: building_id as u32,
+                    light_id_start: light_id as u32,
+                    light_id_end: (light_id + 1) as u32,
+                    color: light.color
+                })
+            })
+            .coalesce(coalesce_set_lights)
+            .map(|set_lights| protobuf_init!(messages::Command::new(), {
+                set_lights: set_lights
+            })).collect::<Vec<_>>().into_iter()
+    });
+
+    for sl in set_lights {
+        cmds.push(sl);
+    }
+
+    cmds
+}
+
+fn make_diff(old_town: &town::Town, new_town: &town::Town) -> Vec<messages::Command> {
+    let buildings_rearranged = old_town.buildings.len() != new_town.buildings.len()
+        ||
+        old_town.buildings.iter()
+        .zip(&new_town.buildings)
+        .all(|(ob, nb)| ob.name == nb.name);
+
+    match buildings_rearranged {
+        true => initialization_commands(new_town),
+        false => {
+            old_town.buildings.iter()
+                .zip(&new_town.buildings)
+                .filter(|&(ob, nb)| Rc::eq(ob, nb))
+                .map(|_| messages::Command::new())
+                .collect()
+        }
+    }
 }
 
 impl TownController {
@@ -42,37 +142,33 @@ impl TownController {
         for (cmd, out) in self.commands.iter() {
             println!("Received command: {:?}", cmd);
 
-            match cmd {
-                client_api::Msg::GetState => {
-                    let response = self.get_state();
-                    let response = json::encode(&response).unwrap();
-                    out.send(response).unwrap();
-                }
+            update_town(cmd, &mut self.town);
 
-                client_api::Msg::SetLights{building_id, light_ids, color} => {
-                    for light_id in light_ids {
-                        let mut cmd = messages::Command::new();
-                        let mut sl = messages::SetLights::new();
-                        sl.set_light_group(building_id as u32);
-                        sl.set_light_id_start(light_id as u32);
-                        sl.set_light_id_end((light_id + 1) as u32);
-                        sl.set_color(color);
-                        cmd.set_set_lights(sl);
-                        self.send_arduino_command(cmd);
-                    }
+            for message in make_diff(&self.previous_town, &self.town) {
+                self.send_arduino_command(message);
+            }
+            self.previous_town = self.town.clone();
 
-                    let response = self.get_state();
-                    let response = json::encode(&response).unwrap();
-                    out.broadcast(response).unwrap();
-                }
 
-                client_api::Msg::SetArduinoAddress{address} => {
-                    self.arduino_addr = address;
-                    let response = self.get_state();
-                    let response = json::encode(&response).unwrap();
-                    out.broadcast(response).unwrap();
-                }
-            };
+//             match cmd {
+//                 client_api::Msg::GetState => {
+//                     let response = self.get_state();
+//                     let response = json::encode(&response).unwrap();
+//                     out.send(response).unwrap();
+//                 }
+//
+//                 client_api::Msg::SetLights{building_id, light_ids, color} => {
+//                 }
+//
+//                 client_api::Msg::SetArduinoAddress{address} => {
+//                     self.arduino_addr = address;
+//                     let response = self.get_state();
+//                     let response = json::encode(&response).unwrap();
+//                     out.broadcast(response).unwrap();
+//                 }
+//             };
+
+            // Send arduino diff
         }
     }
 
@@ -89,22 +185,21 @@ impl TownController {
     /// Sets each light individually to match the current model.
     /// This sends one packet per light.
     fn initialize_arduino(&self) {
-        let mut cmd = messages::Command::new();
-        let mut init = messages::Initialize::new();
-        for length in self.town.buildings.iter().map(|b| b.lights.len()) {
-            init.mut_string_lengths().push(length as u32);
-        }
-        cmd.set_initialize(init);
+        let cmd = protobuf_init!(messages::Command::new(), {
+            initialize => {
+                string_lengths: self.town.buildings.iter().map(|b| b.lights.len() as u32).collect()
+            }
+        });
         self.send_arduino_command(cmd);
 
         for (building_id, building) in self.town.buildings.iter().enumerate() {
-            let mut cmd = messages::Command::new();
-            let mut sl = messages::SetLights::new();
-            sl.set_light_group(building_id as u32);
-            sl.set_light_id_start(0 as u32);
-            sl.set_light_id_end(building.lights.len() as u32);
-            cmd.set_set_lights(sl);
-
+            let cmd = protobuf_init!(messages::Command::new(), {
+                set_lights => {
+                    light_group: building_id as u32,
+                    light_id_start: 0,
+                    light_id_end: building.lights.len() as u32
+                }
+            });
             self.send_arduino_command(cmd);
         }
     }
