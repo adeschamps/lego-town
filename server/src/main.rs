@@ -1,3 +1,6 @@
+#![feature(plugin)]
+#![plugin(protobuf_macros)]
+
 mod client;
 mod client_api;
 mod town;
@@ -6,6 +9,7 @@ include!(concat!(env!("OUT_DIR"), "/messages.rs"));
 
 #[macro_use]
 extern crate clap;
+extern crate itertools;
 extern crate protobuf;
 extern crate rustc_serialize;
 extern crate ws;
@@ -44,20 +48,20 @@ fn main() {
     let town = construct_town(config_data);
     println!("Initialized town: {}", json::as_pretty_json(&town));
 
-    // Create town controller
-    let arduino_addr = value_t!(matches, "arduino address", SocketAddr).unwrap();
     let (tx, rx) = mpsc::channel();
-    let mut town_controller = town_controller::TownController::new(arduino_addr, town, rx);
-    thread::spawn(move || town_controller.run());
-
     // Listen for websocket connections
-    println!("Listening for clients...");
-    match ws::listen("0.0.0.0:1234", |out| {
+    thread::spawn(move || match ws::listen("0.0.0.0:1234", |out| {
         client::Client::new(out, tx.clone())
     }) {
         Ok(()) => {}
         Err(e) => panic!("Failed to create WebSocket server: {}", e)
-    };
+    });
+    println!("Listening for clients...");
+
+    // Create town controller
+    let arduino_addr = value_t!(matches, "arduino address", SocketAddr).unwrap();
+    let mut town_controller = town_controller::TownController::new(arduino_addr, town, rx);
+    town_controller.run();
 }
 
 fn construct_town(filename: &str) -> Town {

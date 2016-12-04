@@ -1,21 +1,20 @@
-extern crate read_color;
-
 use messages;
 
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
+use std::rc::Rc;
 
-#[derive(Debug, PartialEq, RustcDecodable, RustcEncodable)]
+#[derive(Clone, Debug, PartialEq, RustcDecodable, RustcEncodable)]
 pub struct Town {
-    pub buildings: Vec<Building>
+    pub buildings: Vec<Rc<Building>>
 }
 
-#[derive(Debug, PartialEq, RustcDecodable, RustcEncodable)]
+#[derive(Clone, Debug, PartialEq, RustcDecodable, RustcEncodable)]
 pub struct Building {
     pub name: String,
-    pub lights: Vec<Light>
+    pub lights: Vec<Rc<Light>>
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Light {
     pub color: messages::Color
 }
@@ -43,6 +42,7 @@ mod tests {
     use messages;
     use super::*;
     use rustc_serialize::json;
+    use std::rc::Rc;
 
     #[test]
     fn decode_town() {
@@ -53,13 +53,13 @@ mod tests {
         let town : Town = json::decode(init_data.as_str()).unwrap();
         let expected = Town {
             buildings: vec![
-                Building {
+                Rc::new(Building {
                     name: "Cafe Corner".to_string(),
                     lights: vec![
-                        Light { color: messages::Color::RED },
-                        Light { color: messages::Color::RED }
+                        Rc::new(Light{ color: messages::Color::RED }),
+                        Rc::new(Light{ color: messages::Color::RED })
                     ]
-                }
+                })
             ]
         };
         assert_eq!(town, expected);
