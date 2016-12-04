@@ -42,28 +42,35 @@ fn update_town(msg: client_api::Msg, mut town: &mut Rc<town::Town>) {
     }
 }
 
-fn coalesce_set_lights(sl_a: messages::SetLights, sl_b: messages::SetLights) -> Result<messages::SetLights, (messages::SetLights, messages::SetLights)> {
-    protobuf_bind!(sl_a, {
-        light_group: group_a,
-        light_id_start: start_a,
-        light_id_end: end_a,
-        color: color_a
-    });
-    protobuf_bind!(sl_b, {
-        light_group: group_b,
-        light_id_start: start_b,
-        light_id_end: end_b,
-        color: color_b
-    });
-    if group_a == group_b && color_a == color_b && end_a == start_b {
-        Ok(protobuf_init!(messages::SetLights::new(), {
+trait Coalescable
+    where Self: Sized {
+    fn coalesce(Self, Self) -> Result<Self, (Self, Self)>;
+}
+
+impl Coalescable for messages::SetLights {
+    fn coalesce(sl_a: Self, sl_b: Self) -> Result<Self, (Self, Self)> {
+        protobuf_bind!(sl_a, {
             light_group: group_a,
             light_id_start: start_a,
-            light_id_end: end_b,
+            light_id_end: end_a,
             color: color_a
-        }))
-    } else {
-        Err((sl_a, sl_b))
+        });
+        protobuf_bind!(sl_b, {
+            light_group: group_b,
+            light_id_start: start_b,
+            light_id_end: end_b,
+            color: color_b
+        });
+        if group_a == group_b && color_a == color_b && end_a == start_b {
+            Ok(protobuf_init!(messages::SetLights::new(), {
+                light_group: group_a,
+                light_id_start: start_a,
+                light_id_end: end_b,
+                color: color_a
+            }))
+        } else {
+            Err((sl_a, sl_b))
+        }
     }
 }
 
@@ -87,11 +94,11 @@ fn initialization_commands(town: &town::Town) -> Vec<messages::Command> {
                     color: light.color
                 })
             })
-            .coalesce(coalesce_set_lights)
-            .map(|set_lights| protobuf_init!(messages::Command::new(), {
-                set_lights: set_lights
-            })).collect::<Vec<_>>().into_iter()
-    });
+            .coalesce(Coalescable::coalesce)
+            .collect::<Vec<_>>().into_iter()
+    }).map(|set_lights| protobuf_init!(messages::Command::new(), {
+        set_lights: set_lights
+    }));
 
     for sl in set_lights {
         cmds.push(sl);
