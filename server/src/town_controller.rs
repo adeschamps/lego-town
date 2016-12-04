@@ -8,12 +8,14 @@ extern crate ws;
 use protobuf::Message;
 use rustc_serialize::json;
 use std::net::{SocketAddr, UdpSocket};
+use std::rc::Rc;
 use std::sync::mpsc;
 
 pub struct TownController {
     arduino_socket: UdpSocket,
     arduino_addr: SocketAddr,
-    town: town::Town,
+    town: Rc<town::Town>,
+    previous_town: Rc<town::Town>,
     commands: mpsc::Receiver<(client_api::Msg, ws::Sender)>
 }
 
@@ -23,10 +25,12 @@ impl TownController {
                commands: mpsc::Receiver<(client_api::Msg, ws::Sender)>
               ) -> TownController {
         let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
+        let town = Rc::new(town);
         TownController {
             arduino_socket: socket,
             arduino_addr: arduino_addr,
-            town: town,
+            town: town.clone(),
+            previous_town: town.clone(),
             commands: commands
         }
     }
