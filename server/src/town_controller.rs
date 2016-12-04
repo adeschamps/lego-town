@@ -123,3 +123,142 @@ impl TownController {
         }
     }
 }
+
+
+
+
+// TESTS
+
+#[cfg(test)]
+fn initial_town() -> town::Town {
+    town::Town {
+        buildings: vec![
+            Rc::new(town::Building {
+                name: "Cafe Corner".to_string(),
+                lights: vec![
+                    Rc::new(town::Light{ color: messages::Color::RED }),
+                    Rc::new(town::Light{ color: messages::Color::RED }),
+                    Rc::new(town::Light{ color: messages::Color::RED }),
+                    Rc::new(town::Light{ color: messages::Color::RED })
+                ]
+            }),
+            Rc::new(town::Building {
+                name: "Green Grocer".to_string(),
+                lights: vec![
+                    Rc::new(town::Light{ color: messages::Color::RED }),
+                    Rc::new(town::Light{ color: messages::Color::RED }),
+                    Rc::new(town::Light{ color: messages::Color::RED }),
+                    Rc::new(town::Light{ color: messages::Color::RED })
+                ]
+            })
+        ]
+    }
+ }
+
+#[test]
+fn initialization() {
+    let town = Rc::new(initial_town());
+    let messages = initialization_commands(&town);
+    let expected = vec![
+        protobuf_init!(messages::Command::new(), {
+            initialize => {
+                string_lengths: vec![4, 4]
+            }
+        }),
+        protobuf_init!(messages::Command::new(), {
+            set_lights => {
+                light_group: 0,
+                light_id_start: 0,
+                light_id_end: 4,
+                color: messages::Color::RED
+            }
+        }),
+        protobuf_init!(messages::Command::new(), {
+            set_lights => {
+                light_group: 1,
+                light_id_start: 0,
+                light_id_end: 4,
+                color: messages::Color::RED
+            }
+        })
+    ];
+
+    for (m, e) in messages.iter().zip(&expected) {
+        assert_eq!(*m, *e);
+    }
+    assert_eq!(messages, expected);
+}
+
+#[test]
+fn set_lights() {
+    let mut town = Rc::new(initial_town());
+    let old_town = town.clone();
+
+    let msg = client_api::Msg::SetLights {
+        building_id: 1,
+        light_ids: vec![0,2,3],
+        color: messages::Color::BLUE
+    };
+
+    update_town(msg, &mut town);
+
+
+    // Original is unchanged
+    assert_eq!(old_town.buildings[0].lights[0].color, messages::Color::RED);
+    assert_eq!(old_town.buildings[0].lights[1].color, messages::Color::RED);
+    assert_eq!(old_town.buildings[0].lights[2].color, messages::Color::RED);
+    assert_eq!(old_town.buildings[0].lights[3].color, messages::Color::RED);
+
+    assert_eq!(old_town.buildings[1].lights[0].color, messages::Color::RED);
+    assert_eq!(old_town.buildings[1].lights[1].color, messages::Color::RED);
+    assert_eq!(old_town.buildings[1].lights[2].color, messages::Color::RED);
+    assert_eq!(old_town.buildings[1].lights[3].color, messages::Color::RED);
+
+
+    // New town is updated
+    assert_eq!(town.buildings[0].lights[0].color, messages::Color::RED);
+    assert_eq!(town.buildings[0].lights[1].color, messages::Color::RED);
+    assert_eq!(town.buildings[0].lights[2].color, messages::Color::RED);
+    assert_eq!(town.buildings[0].lights[3].color, messages::Color::RED);
+
+    assert_eq!(town.buildings[1].lights[0].color, messages::Color::BLUE);
+    assert_eq!(town.buildings[1].lights[1].color, messages::Color::RED);
+    assert_eq!(town.buildings[1].lights[2].color, messages::Color::BLUE);
+    assert_eq!(town.buildings[1].lights[3].color, messages::Color::BLUE);
+}
+
+#[test]
+fn message_diff() {
+    let mut town = Rc::new(initial_town());
+    let old_town = town.clone();
+    let msg = client_api::Msg::SetLights {
+        building_id: 1,
+        light_ids: vec![0,2,3],
+        color: messages::Color::BLUE
+    };
+
+    update_town(msg, &mut town);
+
+    let messages = make_diff(&old_town, &town);
+    let expected = vec![
+        protobuf_init!(messages::Command::new(), {
+            set_lights => {
+                light_group: 1,
+                light_id_start: 0,
+                light_id_end: 1
+            }
+        }),
+        protobuf_init!(messages::Command::new(), {
+            set_lights => {
+                light_group: 1,
+                light_id_start: 2,
+                light_id_end: 4
+            }
+        })
+    ];
+
+    for (m, e) in messages.iter().zip(&expected) {
+        assert_eq!(*m, *e);
+    }
+    assert_eq!(messages, expected);
+}
