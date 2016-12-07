@@ -60,8 +60,8 @@ fn main() {
 
     // Create town controller
     let arduino_addr = value_t!(matches, "arduino address", SocketAddr).unwrap();
-    let mut town_controller = town_controller::TownController::new(arduino_addr, town, rx);
-    town_controller.run();
+    let mut town_controller = town_controller::TownController::new(arduino_addr, town);
+    town_controller.run(rx);
 }
 
 fn construct_town(filename: &str) -> Town {
