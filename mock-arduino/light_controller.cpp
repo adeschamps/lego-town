@@ -56,8 +56,7 @@ void LightController::handle_messages()
 
   using CT = light_controller::Command::CommandTypeCase;
   success &= [&]{switch(command.CommandType_case()) {
-    case CT::kSetLight: return handle_message(command.set_light());
-    case CT::kSetGroup: return handle_message(command.set_group());
+    case CT::kSetLights: return handle_message(command.set_lights());
     case CT::kInitialize: return handle_message(command.initialize());
     default: return false;
     }}();
@@ -86,34 +85,31 @@ sf::Color parseColor(light_controller::Color const & color)
 }
 
 
-bool LightController::handle_message(light_controller::SetLight const & set_light)
+bool LightController::handle_message(light_controller::SetLights const & set_lights)
 {
-
-  auto light_group = set_light.light_group();
-  auto lightId = set_light.light_id();
-  auto color = parseColor(set_light.color());
+  auto light_group = set_lights.light_group();
+  auto light_id_start = set_lights.light_id_start();
+  auto light_id_end = set_lights.light_id_end();
+  auto color = parseColor(set_lights.color());
 
   if (light_group >= lightstrips.size()) return false;
   auto & lightstrip = lightstrips[light_group];
-  if (lightId >= lightstrip.size()) return false;
-  auto & light = lightstrip[lightId];
-  light.color = color;
+
+  std::cerr << "valid light group\n";
+  std::cerr << "lightstrip.size() :: " << lightstrip.size() << '\n';
+
+  if (light_id_end > lightstrip.size()) return false;
+
+  std::cerr << "valid light end\n";
+
+  if (light_id_end < light_id_start) return false;
+
+  std::cerr << "valid light start\n";
+
+  for (auto light_id = light_id_start; light_id != light_id_end; ++light_id)
+    lightstrip[light_id].color = color;
 
   return true;
-}
-
-
-bool LightController::handle_message(light_controller::SetGroup const & set_group)
-{
-  auto light_group = set_group.light_group();
-  auto color = parseColor(set_group.color());
-
-  if (light_group >= lightstrips.size()) return false;
-  auto & lightstrip = lightstrips[light_group];
-  for (auto & light : lightstrip)
-    light.color = color;
-  return true;
-
 }
 
 
