@@ -1,31 +1,35 @@
 {
   "buildings": [
     {
+      "id": 0,
       "name": "Cafe Corner",
       "lights": [
-        { "color": "RED" },
-        { "color": "RED" }
+        { "id": 0, "color": "RED" },
+        { "id": 1, "color": "RED" }
       ]
     },
     {
+      "id": 1,
       "name": "Green Grocer",
       "lights": [
-        { "color": "GREEN" },
-        { "color": "GREEN" }
+        { "id": 0, "color": "GREEN" },
+        { "id": 1, "color": "GREEN" }
       ]
     },
     {
+      "id": 2,
       "name": "Fire Brigade",
       "lights": [
-        { "color": "BLUE" },
-        { "color": "BLUE" }
+        { "id": 0, "color": "BLUE" },
+        { "id": 1, "color": "BLUE" }
       ]
     },
     {
+      "id": 3,
       "name": "Grand Emporium",
       "lights": [
-        { "color": "YELLOW" },
-        { "color": "YELLOW" }
+        { "id": 0, "color": "YELLOW" },
+        { "id": 1, "color": "YELLOW" }
       ]
     }
   ]
