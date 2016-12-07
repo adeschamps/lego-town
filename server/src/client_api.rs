@@ -9,6 +9,11 @@ use std::net::{SocketAddr, ToSocketAddrs};
 pub enum Msg {
     GetState,
 
+    SetBuilding {
+        building_id: u8,
+        color: messages::Color
+    },
+
     SetLights {
         building_id: u8,
         light_ids: Vec<u8>,
@@ -28,6 +33,15 @@ impl Decodable for Msg {
                 Ok(match msg_type.as_str() {
                     "getState" => {
                         Msg::GetState
+                    }
+
+                    "setBuilding" => {
+                        Msg::SetBuilding {
+                            building_id:
+                                d.read_struct_field("buildingId", 0, D::read_u8)?,
+                            color:
+                                d.read_struct_field("color", 2, messages::Color::decode)?
+                        }
                     }
 
                     "setLights" => {
