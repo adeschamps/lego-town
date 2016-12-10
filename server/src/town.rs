@@ -1,6 +1,5 @@
 use messages;
 
-use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq, RustcDecodable, RustcEncodable)]
@@ -15,27 +14,10 @@ pub struct Building {
     pub lights: Vec<Rc<Light>>
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, RustcDecodable, RustcEncodable)]
 pub struct Light {
     pub id: u8,
     pub color: messages::Color
-}
-
-impl Decodable for Light {
-    fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
-        d.read_struct("Light", 0, |d| Ok(Light{
-            id:
-                d.read_struct_field("id", 0, D::read_u8)?,
-            color:
-                d.read_struct_field("color", 1, messages::Color::decode)?
-        }))
-    }
-}
-
-impl Encodable for Light {
-    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        self.color.encode(s)
-    }
 }
 
 #[cfg(test)]
