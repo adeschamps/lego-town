@@ -1,2 +1,1 @@
 light_controller.* int_size:IS_8;
-light_controller.Initialize.string_lengths max_count:6;
