@@ -5,31 +5,26 @@
       "name": "Cafe Corner",
       "lights": [
         { "id": 0, "color": "RED" },
-        { "id": 1, "color": "RED" }
+        { "id": 1, "color": "RED" },
+        { "id": 2, "color": "RED" },
+        { "id": 3, "color": "RED" },
+        { "id": 4, "color": "RED" },
+        { "id": 5, "color": "RED" },
+        { "id": 6, "color": "RED" },
+        { "id": 7, "color": "RED" },
+        { "id": 8, "color": "RED" }
       ]
     },
     {
       "id": 1,
-      "name": "Green Grocer",
-      "lights": [
-        { "id": 0, "color": "GREEN" },
-        { "id": 1, "color": "GREEN" }
-      ]
-    },
-    {
-      "id": 2,
       "name": "Fire Brigade",
       "lights": [
         { "id": 0, "color": "BLUE" },
-        { "id": 1, "color": "BLUE" }
-      ]
-    },
-    {
-      "id": 3,
-      "name": "Grand Emporium",
-      "lights": [
-        { "id": 0, "color": "YELLOW" },
-        { "id": 1, "color": "YELLOW" }
+        { "id": 1, "color": "BLUE" },
+        { "id": 2, "color": "BLUE" },
+        { "id": 3, "color": "BLUE" },
+        { "id": 4, "color": "BLUE" },
+        { "id": 5, "color": "BLUE" }
       ]
     }
   ]

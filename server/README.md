@@ -9,3 +9,7 @@ Usage:
 ```bash
 $ cargo run
 ```
+
+## Running on the Raspberry Pi
+
+To run on the Raspberry Pi, follow [these instructions](https://github.com/japaric/rust-cross).

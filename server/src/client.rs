@@ -37,8 +37,6 @@ impl Handler for Client {
             }
         };
 
-        println!("Received message: {}", msg);
-
         let msg = match json::decode(msg) {
             Ok(msg) => msg,
             Err(e) => {
