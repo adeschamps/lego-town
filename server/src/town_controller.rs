@@ -172,16 +172,7 @@ impl Coalescable for messages::SetLights {
 }
 
 fn initialization_commands(town: &town::Town) -> Vec<messages::Command> {
-    let mut cmds = Vec::new();
-
-    let init = protobuf_init!(messages::Command::new(), {
-        initialize => {
-            string_lengths: town.buildings.iter().map(|b| b.lights.len() as u32).collect()
-        }
-    });
-    cmds.push(init);
-
-    let set_lights = town.buildings.iter().flat_map(|building| {
+    town.buildings.iter().flat_map(|building| {
         building.lights.iter()
             .map(|light| {
                 protobuf_init!(messages::SetLights::new(), {
@@ -193,15 +184,9 @@ fn initialization_commands(town: &town::Town) -> Vec<messages::Command> {
             })
             .coalesce(Coalescable::coalesce)
             .collect::<Vec<_>>().into_iter()
-    }).map(|set_lights| protobuf_init!(messages::Command::new(), {
-        set_lights: set_lights
-    }));
-
-    for sl in set_lights {
-        cmds.push(sl);
-    }
-
-    cmds
+        }).map(|set_lights| protobuf_init!(messages::Command::new(), {
+            set_lights: set_lights
+        })).collect()
 }
 
 fn make_diff(old_town: &town::Town, new_town: &town::Town) -> Vec<messages::Command> {
@@ -286,11 +271,6 @@ fn initialization() {
     let town = Rc::new(initial_town());
     let messages = initialization_commands(&town);
     let expected = vec![
-        protobuf_init!(messages::Command::new(), {
-            initialize => {
-                string_lengths: vec![4, 4]
-            }
-        }),
         protobuf_init!(messages::Command::new(), {
             set_lights => {
                 light_group: 0,
