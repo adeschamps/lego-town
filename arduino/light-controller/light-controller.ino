@@ -119,12 +119,14 @@ inline void handle(light_controller_SetLights const & set_lights)
     auto & color = set_lights.color;
 
     if (group_id >= NUM_LIGHTSTRIPS) return;
+    auto & lightstrip = lightstrips[group_id];
+
     if (light_id_start > light_id_end) return;
-    if (light_id_end > lightstrips[group_id].numPixels()) return;
+    if (light_id_end > lightstrip.numPixels()) return;
 
     for (uint8_t i = light_id_start; i != light_id_end; ++i)
-      lightstrips[group_id].setPixelColor(i, parse_color(color));
-    lightstrips[group_id].show();
+      lightstrip.setPixelColor(i, parse_color(color));
+    lightstrip.show();
 }
 
 
