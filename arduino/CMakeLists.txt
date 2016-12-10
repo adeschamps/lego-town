@@ -49,6 +49,7 @@ message(STATUS "Nanopb generator source: ${NANOPB_GENERATOR_SOURCE_DIR}")
 
 nanopb_generate_cpp(PROTO_SRCS PROTO_HDRS ${CMAKE_SOURCE_DIR}/../api/messages.proto)
 # TODO: This feels somewhat dirty?
+include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS}
     PROPERTIES GENERATED TRUE)

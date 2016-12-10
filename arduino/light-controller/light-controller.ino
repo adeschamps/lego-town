@@ -7,9 +7,7 @@
 
 #include "log.hpp"
 
-#define SSID "Deschamps"
-#define PASSWORD "31803180"
-#define INCOMING_MESSAGES_PORT 12345
+#include "network_settings.h"
 
 #define NUM_LIGHTSTRIPS 3
 uint8_t lightstrip_pins[NUM_LIGHTSTRIPS] = {6, 7, 8};
