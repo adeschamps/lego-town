@@ -94,7 +94,7 @@ uint32_t parse_color(light_controller_Color color)
   COLOR(OFF,       0,   0,   0);
   COLOR(WHITE,   255, 255, 255);
   COLOR(RED,     255,   0,   0);
-  COLOR(ORANGE,  255, 128,   0);
+  COLOR(ORANGE,  255,  96,   0);
   COLOR(YELLOW,  255, 255,   0);
   COLOR(GREEN,     0, 255,   0);
   COLOR(CYAN,      0, 255, 255);
