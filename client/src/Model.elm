@@ -41,7 +41,7 @@ init : ( Model, Cmd Msg )
 init =
     let
         settings =
-            { serverUrl = "ws://192.168.1.136:1234"
+            { serverUrl = "ws://192.168.1.109:1234"
             , arduinoUrl = ""
             }
 
