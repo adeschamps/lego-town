@@ -14,22 +14,29 @@ uint8_t lightstrip_pins[NUM_LIGHTSTRIPS] = {6, 7, 8};
 Adafruit_NeoPixel lightstrips[NUM_LIGHTSTRIPS];
 
 #define BUFFER_SIZE light_controller_Command_size
-uint8_t buffer[BUFFER_SIZE];
 
 WiFiEspUDP Udp;
 
 uint32_t parse_color(light_controller_Color color);
 
-#if 1
-#define DEBUG_LIGHT(color)                                              \
+#if 0
+#define DEBUG_LIGHT(color) {                                            \
   for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)                        \
   {                                                                     \
     lightstrips[i].setPixelColor(0, parse_color(light_controller_Color_##color)); \
     lightstrips[i].show();                                              \
+  }                                                                     \
   }
 #else
-#define DEBUG_LIGHT(color)
+#define DEBUG_LIGHT(color) {}
 #endif
+
+#define DEBUG_BLINK(color) {                    \
+  DEBUG_LIGHT(color);                           \
+  delay(100);                                   \
+  DEBUG_LIGHT(OFF);                             \
+  delay(200);                                   \
+  }
 
 // Do nothing, forever.
 inline void halt()
@@ -43,7 +50,9 @@ void setup()
   // Initialize lightstrips with 1 light
   for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
   {
-    lightstrips[i] = Adafruit_NeoPixel(1, lightstrip_pins[i], NEO_GRB + NEO_KHZ800);
+    auto len = 9;
+    auto pin = lightstrip_pins[i];
+    lightstrips[i] = Adafruit_NeoPixel(len, pin, NEO_GRB + NEO_KHZ800);
     lightstrips[i].begin();
   }
 
@@ -64,12 +73,8 @@ void setup()
 
   // Connect to network
   while (WiFi.begin(SSID, PASSWORD) != WL_CONNECTED)
-  {}
-
-  for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
   {
-    lightstrips[i].setPixelColor(0, parse_color(light_controller_Color_GREEN));
-    lightstrips[i].show();
+    DEBUG_BLINK(CYAN);
   }
 
   if (Udp.begin(INCOMING_MESSAGES_PORT) == 0)
@@ -122,8 +127,16 @@ inline void handle(light_controller_SetLights const & set_lights)
     lightstrips[group_id].show();
 }
 
+
+// NOTE: Currently a no-op
 inline void handle(light_controller_Initialize const & initialize)
 {
+#if 0
+  for (uint8_t i = 0; i != initialize.string_lengths_count; ++i)
+  {
+    DEBUG_BLINK(YELLOW);
+  }
+
   // Reset
   for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
     lightstrips[i].updateLength(0);
@@ -131,27 +144,49 @@ inline void handle(light_controller_Initialize const & initialize)
   // Init
   for (uint8_t i = 0; i != initialize.string_lengths_count && i != NUM_LIGHTSTRIPS; ++i)
   {
-    auto strip_length = initialize.string_lengths[i];
-    lightstrips[i].updateLength(strip_length);
-    for (uint8_t n = 0; n != strip_length; ++n)
-      lightstrips[i].setPixelColor(n, parse_color(light_controller_Color_OFF));
-    lightstrips[i].show();
+    auto len = initialize.string_lengths[i];
+    auto pin = lightstrip_pins[i];
+    lightstrips[i] = Adafruit_NeoPixel(len, pin, NEO_GRB + NEO_KHZ800);
     lightstrips[i].begin();
   }
+#endif
 }
 
 bool even_message = true;
 
-inline void handle_message()
+inline void handle_messages()
 {
+  auto packet_length = Udp.parsePacket();
+  if (packet_length == 0)
+  {
+    DEBUG_BLINK(WHITE);
+    return;
+  }
+
+  DEBUG_BLINK(BLUE);
+
+  uint8_t buffer[BUFFER_SIZE];
+  memset(buffer, 0, BUFFER_SIZE);
+
+  if (Udp.available() != packet_length)
+  {
+    DEBUG_LIGHT(ORANGE);
+    halt();
+  }
+
   auto len = Udp.read(buffer, BUFFER_SIZE);
+  Udp.flush();
+  if (len != packet_length)
+  {
+    DEBUG_BLINK(MAGENTA);
+    return;
+  }
 
   light_controller_Command command = light_controller_Command_init_zero;
   pb_istream_t stream = pb_istream_from_buffer(buffer, len);
-  if (!pb_decode(&stream, light_controller_Command_fields, &command)) {
-    lightstrips[0].setPixelColor(0, parse_color(light_controller_Color_RED));
-    lightstrips[0].show();
-    LOG_ERROR("Failed to deserialize message");
+  if (!pb_decode(&stream, light_controller_Command_fields, &command))
+  {
+    DEBUG_LIGHT(RED);
     return;
   }
 
@@ -178,8 +213,6 @@ void update_lights()
 
 void loop()
 {
-  if (Udp.parsePacket())
-    handle_message();
-
+  handle_messages();
   update_lights();
 }
