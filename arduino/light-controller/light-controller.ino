@@ -1,17 +1,14 @@
 #include <Adafruit_NeoPixel.h>
-#include <SoftwareSerial.h>
 #include <WiFiEsp.h>
 #include <WiFiEspUdp.h>
 #include <messages.pb.h>
 #include <pb_decode.h>
 
-#include "log.hpp"
-
 #include "network_settings.h"
 
-#define NUM_LIGHTSTRIPS 3
-uint8_t lightstrip_pins[NUM_LIGHTSTRIPS] = {6, 7, 8};
-Adafruit_NeoPixel lightstrips[NUM_LIGHTSTRIPS];
+// docs: Adafruit_NeoPixel(uint16_t n, uint8_t p=6, neoPixelType t=NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel lightstrip_0 (9, 6);
+Adafruit_NeoPixel lightstrip_1 (6, 7);
 
 #define BUFFER_SIZE light_controller_Command_size
 
@@ -45,17 +42,18 @@ inline void halt()
     delay(1000);
 }
 
+Adafruit_NeoPixel & get_lightstrip(uint8_t strip_id)
+{
+  switch (strip_id)
+  {
+  case 0: return lightstrip_0;
+  case 1: return lightstrip_1;
+  default: return nullptr;
+  }
+}
+
 void setup()
 {
-  // Initialize lightstrips with 1 light
-  for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
-  {
-    auto len = 9;
-    auto pin = lightstrip_pins[i];
-    lightstrips[i] = Adafruit_NeoPixel(len, pin, NEO_GRB + NEO_KHZ800);
-    lightstrips[i].begin();
-  }
-
   DEBUG_LIGHT(BLUE);
 
   // Initialize WiFi
@@ -118,43 +116,17 @@ inline void handle(light_controller_SetLights const & set_lights)
     auto & light_id_end = set_lights.light_id_end;
     auto & color = set_lights.color;
 
-    if (group_id >= NUM_LIGHTSTRIPS) return;
-    auto & lightstrip = lightstrips[group_id];
+    auto* lightstrip = get_lightstrip(group_id);
+    if (lightstrip == nullptr) return;
 
     if (light_id_start > light_id_end) return;
-    if (light_id_end > lightstrip.numPixels()) return;
+    if (light_id_end > lightstrip->numPixels()) return;
 
     for (uint8_t i = light_id_start; i != light_id_end; ++i)
-      lightstrip.setPixelColor(i, parse_color(color));
-    lightstrip.show();
+      lightstrip->setPixelColor(i, parse_color(color));
+    lightstrip->show();
 }
 
-
-// NOTE: Currently a no-op
-inline void handle(light_controller_Initialize const & initialize)
-{
-#if 0
-  for (uint8_t i = 0; i != initialize.string_lengths_count; ++i)
-  {
-    DEBUG_BLINK(YELLOW);
-  }
-
-  // Reset
-  for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
-    lightstrips[i].updateLength(0);
-
-  // Init
-  for (uint8_t i = 0; i != initialize.string_lengths_count && i != NUM_LIGHTSTRIPS; ++i)
-  {
-    auto len = initialize.string_lengths[i];
-    auto pin = lightstrip_pins[i];
-    lightstrips[i] = Adafruit_NeoPixel(len, pin, NEO_GRB + NEO_KHZ800);
-    lightstrips[i].begin();
-  }
-#endif
-}
-
-bool even_message = true;
 
 inline void handle_messages()
 {
@@ -197,19 +169,15 @@ inline void handle_messages()
   case light_controller_Command_set_lights_tag:
     handle(command.CommandType.set_lights);
     break;
-
-  case light_controller_Command_initialize_tag:
-    handle(command.CommandType.initialize);
-    break;
   }
 }
 
 // TODO: Implement various light transitions and effects
 void update_lights()
 {
-  for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
+  for (uint8_t i = 0; i != 2; ++i)
   {
-    lightstrips[i].show();
+    get_lightstrip(i)->show();
   }
 }
 
