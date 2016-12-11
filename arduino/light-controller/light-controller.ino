@@ -6,6 +6,7 @@
 
 #include "network_settings.h"
 
+#define NUM_LIGHTSTRIPS 2
 // docs: Adafruit_NeoPixel(uint16_t n, uint8_t p=6, neoPixelType t=NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel lightstrip_0 (9, 6);
 Adafruit_NeoPixel lightstrip_1 (6, 7);
@@ -16,12 +17,14 @@ WiFiEspUDP Udp;
 
 uint32_t parse_color(light_controller_Color color);
 
-#if 0
+#define ENABLE_DEBUG 0
+#if ENABLE_DEBUG
 #define DEBUG_LIGHT(color) {                                            \
   for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)                        \
   {                                                                     \
-    lightstrips[i].setPixelColor(0, parse_color(light_controller_Color_##color)); \
-    lightstrips[i].show();                                              \
+    auto* lightstrip = get_lightstrip(i);                               \
+    lightstrip->setPixelColor(0, parse_color(light_controller_Color_##color)); \
+    lightstrip->show();                                                 \
   }                                                                     \
   }
 #else
@@ -42,18 +45,21 @@ inline void halt()
     delay(1000);
 }
 
-Adafruit_NeoPixel & get_lightstrip(uint8_t strip_id)
+Adafruit_NeoPixel* get_lightstrip(uint8_t strip_id)
 {
   switch (strip_id)
   {
-  case 0: return lightstrip_0;
-  case 1: return lightstrip_1;
+  case 0: return &lightstrip_0;
+  case 1: return &lightstrip_1;
   default: return nullptr;
   }
 }
 
 void setup()
 {
+  lightstrip_0.begin();
+  lightstrip_1.begin();
+
   DEBUG_LIGHT(BLUE);
 
   // Initialize WiFi
@@ -82,6 +88,14 @@ void setup()
   }
 
   DEBUG_LIGHT(GREEN);
+
+  for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
+  {
+    auto* lightstrip = get_lightstrip(i);
+    auto num_pixels = lightstrip->numPixels();
+    for (uint8_t n = 0; n != num_pixels; ++n)
+      lightstrip->setPixelColor(n, parse_color(light_controller_Color_WHITE));
+  }
 }
 
 // Convert a color enum to an int for setting an LED
@@ -175,7 +189,7 @@ inline void handle_messages()
 // TODO: Implement various light transitions and effects
 void update_lights()
 {
-  for (uint8_t i = 0; i != 2; ++i)
+  for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
   {
     get_lightstrip(i)->show();
   }
