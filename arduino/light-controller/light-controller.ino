@@ -6,10 +6,12 @@
 
 #include "network_settings.h"
 
-#define NUM_LIGHTSTRIPS 2
 // docs: Adafruit_NeoPixel(uint16_t n, uint8_t p=6, neoPixelType t=NEO_GRB + NEO_KHZ800);
-Adafruit_NeoPixel lightstrip_0 (9, 6);
-Adafruit_NeoPixel lightstrip_1 (6, 7);
+Adafruit_NeoPixel lightstrips[] = {
+  Adafruit_NeoPixel (9, 6),
+  Adafruit_NeoPixel (6, 7)
+};
+#define NUM_LIGHTSTRIPS sizeof(lightstrips) / sizeof(lightstrips[0])
 
 #define BUFFER_SIZE light_controller_Command_size
 
@@ -22,9 +24,9 @@ uint32_t parse_color(light_controller_Color color);
 #define DEBUG_LIGHT(color) {                                            \
   for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)                        \
   {                                                                     \
-    auto* lightstrip = get_lightstrip(i);                               \
-    lightstrip->setPixelColor(0, parse_color(light_controller_Color_##color)); \
-    lightstrip->show();                                                 \
+    auto & lightstrip = lightstrips[i];                                 \
+    lightstrip.setPixelColor(0, parse_color(light_controller_Color_##color)); \
+    lightstrip.show();                                                  \
   }                                                                     \
   }
 #else
@@ -45,20 +47,10 @@ inline void halt()
     delay(1000);
 }
 
-Adafruit_NeoPixel* get_lightstrip(uint8_t strip_id)
-{
-  switch (strip_id)
-  {
-  case 0: return &lightstrip_0;
-  case 1: return &lightstrip_1;
-  default: return nullptr;
-  }
-}
-
 void setup()
 {
-  lightstrip_0.begin();
-  lightstrip_1.begin();
+  for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
+    lightstrips[i].begin();
 
   DEBUG_LIGHT(BLUE);
 
@@ -91,10 +83,10 @@ void setup()
 
   for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
   {
-    auto* lightstrip = get_lightstrip(i);
-    auto num_pixels = lightstrip->numPixels();
+    auto & lightstrip = lightstrips[i];
+    auto num_pixels = lightstrip.numPixels();
     for (uint8_t n = 0; n != num_pixels; ++n)
-      lightstrip->setPixelColor(n, parse_color(light_controller_Color_WHITE));
+      lightstrip.setPixelColor(n, parse_color(light_controller_Color_WHITE));
   }
 }
 
@@ -130,15 +122,15 @@ inline void handle(light_controller_SetLights const & set_lights)
     auto & light_id_end = set_lights.light_id_end;
     auto & color = set_lights.color;
 
-    auto* lightstrip = get_lightstrip(group_id);
-    if (lightstrip == nullptr) return;
+    if (group_id >= NUM_LIGHTSTRIPS) return;
+    auto & lightstrip = lightstrips[group_id];
 
     if (light_id_start > light_id_end) return;
-    if (light_id_end > lightstrip->numPixels()) return;
+    if (light_id_end > lightstrip.numPixels()) return;
 
     for (uint8_t i = light_id_start; i != light_id_end; ++i)
-      lightstrip->setPixelColor(i, parse_color(color));
-    lightstrip->show();
+      lightstrip.setPixelColor(i, parse_color(color));
+    lightstrip.show();
 }
 
 
@@ -191,7 +183,7 @@ void update_lights()
 {
   for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
   {
-    get_lightstrip(i)->show();
+    lightstrips[i].show();
   }
 }
 
