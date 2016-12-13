@@ -1,10 +1,5 @@
 extern crate serde;
 
-use messages;
-
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde::de;
-use serde::de::Visitor;
 use std::net::{SocketAddr};
 use town;
 
@@ -60,7 +55,6 @@ pub struct Light {
 
 #[cfg(test)]
 mod tests {
-    use messages;
     use serde_json;
     use std::net::{ToSocketAddrs};
     use super::*;
