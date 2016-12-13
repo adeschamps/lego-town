@@ -94,7 +94,7 @@ impl TownController {
                 id: i as u8,
                 lights: b.lights.iter().enumerate().map(|(i,l)| client_api::Light {
                     id: i as u8,
-                    color: l.color
+                    color: l.color.clone()
                 }).collect()
             }).collect()
         }
@@ -103,33 +103,33 @@ impl TownController {
 
 
 fn update_town(msg: &client_api::Msg, mut town: &mut Rc<town::Town>) {
-    match *msg {
-        client_api::Msg::GetState => {
+    match msg {
+        &client_api::Msg::GetState => {
         }
 
-        client_api::Msg::SetBuilding{building_id, color} => {
+        &client_api::Msg::SetBuilding{building_id, ref color} => {
             let mut town = Rc::make_mut(&mut town);
             let building_id = building_id as usize;
             if let Some(building) = town.buildings.get_mut(building_id).map(Rc::make_mut) {
                 for light in building.lights.iter_mut().map(Rc::make_mut) {
-                    light.color = color;
+                    light.color = color.clone();
                 }
             }
         }
 
-        client_api::Msg::SetLights{building_id, ref light_ids, color} => {
+        &client_api::Msg::SetLights{building_id, ref light_ids, ref color} => {
             let mut town = Rc::make_mut(&mut town);
             let building_id = building_id as usize;
             if let Some(building) = town.buildings.get_mut(building_id).map(Rc::make_mut) {
                 for &light_id in light_ids {
                     if let Some(light) = building.lights.get_mut(light_id as usize).map(Rc::make_mut) {
-                        light.color = color;
+                        light.color = color.clone();
                     }
                 }
             }
         }
 
-        client_api::Msg::SetArduinoAddress{..} => {
+        &client_api::Msg::SetArduinoAddress{..} => {
         }
     }
 }
@@ -182,13 +182,13 @@ fn initialization_commands(town: &town::Town) -> Vec<messages::Command> {
     cmds.push(init);
 
     let set_lights = town.buildings.iter().flat_map(|building| {
-        building.lights.iter().enumerate()
-            .map(|(light_id, light)| {
+        building.lights.iter()
+            .map(|light| {
                 protobuf_init!(messages::SetLights::new(), {
                     light_group: building.id as u32,
-                    light_id_start: light_id as u32,
-                    light_id_end: (light_id + 1) as u32,
-                    color: light.color
+                    light_id_start: light.id as u32,
+                    light_id_end: (light.id + 1) as u32,
+                    color: light.color.clone().into()
                 })
             })
             .coalesce(Coalescable::coalesce)
@@ -217,7 +217,7 @@ fn make_diff(old_town: &town::Town, new_town: &town::Town) -> Vec<messages::Comm
                     light_group: building.id as u32,
                     light_id_start: light.id as u32,
                     light_id_end: (light.id + 1) as u32,
-                    color: light.color
+                    color: light.color.clone().into()
                 }))
                 .coalesce(Coalescable::coalesce)
                 .collect::<Vec<_>>().into_iter()
@@ -244,20 +244,20 @@ fn initial_town() -> town::Town {
                 id: 0,
                 name: "Cafe Corner".to_string(),
                 lights: vec![
-                    Rc::new(town::Light{ id: 0, color: messages::Color::RED }),
-                    Rc::new(town::Light{ id: 1, color: messages::Color::RED }),
-                    Rc::new(town::Light{ id: 2, color: messages::Color::RED }),
-                    Rc::new(town::Light{ id: 3, color: messages::Color::RED })
+                    Rc::new(town::Light{ id: 0, color: town::Color::RED }),
+                    Rc::new(town::Light{ id: 1, color: town::Color::RED }),
+                    Rc::new(town::Light{ id: 2, color: town::Color::RED }),
+                    Rc::new(town::Light{ id: 3, color: town::Color::RED })
                 ]
             }),
             Rc::new(town::Building {
                 id: 1,
                 name: "Green Grocer".to_string(),
                 lights: vec![
-                    Rc::new(town::Light{ id: 0, color: messages::Color::RED }),
-                    Rc::new(town::Light{ id: 1,  color: messages::Color::RED }),
-                    Rc::new(town::Light{ id: 2, color: messages::Color::RED }),
-                    Rc::new(town::Light{ id: 3, color: messages::Color::RED })
+                    Rc::new(town::Light{ id: 0, color: town::Color::RED }),
+                    Rc::new(town::Light{ id: 1, color: town::Color::RED }),
+                    Rc::new(town::Light{ id: 2, color: town::Color::RED }),
+                    Rc::new(town::Light{ id: 3, color: town::Color::RED })
                 ]
             })
         ]
@@ -321,15 +321,15 @@ fn test_set_building() {
 
     let msg = client_api::Msg::SetBuilding {
         building_id: 1,
-        color: messages::Color::BLUE
+        color: town::Color::BLUE
     };
 
     update_town(&msg, &mut town);
 
-    assert_eq!(town.buildings[1].lights[0].color, messages::Color::BLUE);
-    assert_eq!(town.buildings[1].lights[1].color, messages::Color::BLUE);
-    assert_eq!(town.buildings[1].lights[2].color, messages::Color::BLUE);
-    assert_eq!(town.buildings[1].lights[3].color, messages::Color::BLUE);
+    assert_eq!(town.buildings[1].lights[0].color, town::Color::BLUE);
+    assert_eq!(town.buildings[1].lights[1].color, town::Color::BLUE);
+    assert_eq!(town.buildings[1].lights[2].color, town::Color::BLUE);
+    assert_eq!(town.buildings[1].lights[3].color, town::Color::BLUE);
 }
 
 #[test]
@@ -340,34 +340,34 @@ fn test_set_lights() {
     let msg = client_api::Msg::SetLights {
         building_id: 1,
         light_ids: vec![0,2,3],
-        color: messages::Color::BLUE
+        color: town::Color::BLUE
     };
 
     update_town(&msg, &mut town);
 
 
     // Original is unchanged
-    assert_eq!(old_town.buildings[0].lights[0].color, messages::Color::RED);
-    assert_eq!(old_town.buildings[0].lights[1].color, messages::Color::RED);
-    assert_eq!(old_town.buildings[0].lights[2].color, messages::Color::RED);
-    assert_eq!(old_town.buildings[0].lights[3].color, messages::Color::RED);
+    assert_eq!(old_town.buildings[0].lights[0].color, town::Color::RED);
+    assert_eq!(old_town.buildings[0].lights[1].color, town::Color::RED);
+    assert_eq!(old_town.buildings[0].lights[2].color, town::Color::RED);
+    assert_eq!(old_town.buildings[0].lights[3].color, town::Color::RED);
 
-    assert_eq!(old_town.buildings[1].lights[0].color, messages::Color::RED);
-    assert_eq!(old_town.buildings[1].lights[1].color, messages::Color::RED);
-    assert_eq!(old_town.buildings[1].lights[2].color, messages::Color::RED);
-    assert_eq!(old_town.buildings[1].lights[3].color, messages::Color::RED);
+    assert_eq!(old_town.buildings[1].lights[0].color, town::Color::RED);
+    assert_eq!(old_town.buildings[1].lights[1].color, town::Color::RED);
+    assert_eq!(old_town.buildings[1].lights[2].color, town::Color::RED);
+    assert_eq!(old_town.buildings[1].lights[3].color, town::Color::RED);
 
 
     // New town is updated
-    assert_eq!(town.buildings[0].lights[0].color, messages::Color::RED);
-    assert_eq!(town.buildings[0].lights[1].color, messages::Color::RED);
-    assert_eq!(town.buildings[0].lights[2].color, messages::Color::RED);
-    assert_eq!(town.buildings[0].lights[3].color, messages::Color::RED);
+    assert_eq!(town.buildings[0].lights[0].color, town::Color::RED);
+    assert_eq!(town.buildings[0].lights[1].color, town::Color::RED);
+    assert_eq!(town.buildings[0].lights[2].color, town::Color::RED);
+    assert_eq!(town.buildings[0].lights[3].color, town::Color::RED);
 
-    assert_eq!(town.buildings[1].lights[0].color, messages::Color::BLUE);
-    assert_eq!(town.buildings[1].lights[1].color, messages::Color::RED);
-    assert_eq!(town.buildings[1].lights[2].color, messages::Color::BLUE);
-    assert_eq!(town.buildings[1].lights[3].color, messages::Color::BLUE);
+    assert_eq!(town.buildings[1].lights[0].color, town::Color::BLUE);
+    assert_eq!(town.buildings[1].lights[1].color, town::Color::RED);
+    assert_eq!(town.buildings[1].lights[2].color, town::Color::BLUE);
+    assert_eq!(town.buildings[1].lights[3].color, town::Color::BLUE);
 }
 
 #[test]
@@ -377,7 +377,7 @@ fn message_diff() {
     let msg = client_api::Msg::SetLights {
         building_id: 1,
         light_ids: vec![0,2,3],
-        color: messages::Color::BLUE
+        color: town::Color::BLUE
     };
 
     update_town(&msg, &mut town);
