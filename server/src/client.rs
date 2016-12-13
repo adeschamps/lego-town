@@ -1,11 +1,11 @@
 use client_api;
 
-extern crate rustc_serialize;
+extern crate serde;
 extern crate ws;
 
 use ws::{Error, Handler, Handshake, Message};
 use std::sync::mpsc;
-use rustc_serialize::json;
+use serde_json;
 
 pub struct Client {
     out: ws::Sender,
@@ -37,7 +37,7 @@ impl Handler for Client {
             }
         };
 
-        let msg = match json::decode(msg) {
+        let msg = match serde_json::from_str(msg) {
             Ok(msg) => msg,
             Err(e) => {
                 println!("Failed to parse message: {}", e);

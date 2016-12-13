@@ -5,7 +5,7 @@ use messages;
 extern crate ws;
 use itertools::Itertools;
 use protobuf::Message;
-use rustc_serialize::json;
+use serde_json;
 use std::net::{SocketAddr, UdpSocket};
 use std::rc::Rc;
 use std::sync::mpsc;
@@ -47,7 +47,7 @@ impl TownController {
             self.previous_town = self.town.clone();
 
             let state = self.get_state();
-            let msg = json::encode(&state).unwrap();
+            let msg = serde_json::to_string(&state).unwrap();
             out.broadcast(msg).unwrap();
         }
     }

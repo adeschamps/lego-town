@@ -1,4 +1,5 @@
 #![feature(plugin)]
+#![feature(proc_macro)]
 #![plugin(protobuf_macros)]
 
 mod client;
@@ -11,11 +12,13 @@ include!(concat!(env!("OUT_DIR"), "/messages.rs"));
 extern crate clap;
 extern crate itertools;
 extern crate protobuf;
-extern crate rustc_serialize;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
 extern crate ws;
 
 use clap::{Arg, App};
-use rustc_serialize::json;
 use std::fs::File;
 use std::io::Read;
 use std::net::SocketAddr;
@@ -46,7 +49,7 @@ fn main() {
     // Initialize town model
     let config_data = matches.value_of("config data").unwrap();
     let town = construct_town(config_data);
-    println!("Initialized town: {}", json::as_pretty_json(&town));
+    println!("Initialized town: {}", serde_json::to_string_pretty(&town).unwrap());
 
     let (tx, rx) = mpsc::channel();
     // Listen for websocket connections
@@ -74,7 +77,7 @@ fn construct_town(filename: &str) -> Town {
         Err(e) => panic!("Failed to read file: {}", e),
         Ok(x) => x
     };
-    let town = match json::decode(&init_data) {
+    let town = match serde_json::from_str(&init_data) {
         Err(e) => panic!("Failed to parse init data: {}", e),
         Ok(town) => town
     };
