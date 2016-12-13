@@ -1,23 +1,24 @@
-extern crate rustc_serialize;
+extern crate serde;
 
-use messages;
+use std::net::{SocketAddr};
+use town;
 
-use rustc_serialize::{Decodable, Decoder, DecoderHelpers, Encodable, Encoder, EncoderHelpers};
-use std::net::{SocketAddr, ToSocketAddrs};
-
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Deserialize)]
 pub enum Msg {
     GetState,
 
     SetBuilding {
+        #[serde(rename = "buildingId")]
         building_id: u8,
-        color: messages::Color
+        color: town::Color
     },
 
     SetLights {
+        #[serde(rename = "buildingId")]
         building_id: u8,
+        #[serde(rename = "lightIds")]
         light_ids: Vec<u8>,
-        color: messages::Color
+        color: town::Color
     },
 
     SetArduinoAddress {
@@ -25,200 +26,85 @@ pub enum Msg {
     }
 }
 
-
-impl Decodable for Msg {
-    fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
-        d.read_struct("Msg", 0, |d| {
-            d.read_struct_field("type", 0, D::read_str).and_then(|msg_type| {
-                Ok(match msg_type.as_str() {
-                    "getState" => {
-                        Msg::GetState
-                    }
-
-                    "setBuilding" => {
-                        Msg::SetBuilding {
-                            building_id:
-                                d.read_struct_field("buildingId", 0, D::read_u8)?,
-                            color:
-                                d.read_struct_field("color", 2, messages::Color::decode)?
-                        }
-                    }
-
-                    "setLights" => {
-                        Msg::SetLights {
-                            building_id:
-                                d.read_struct_field("buildingId", 0, D::read_u8)?,
-                            light_ids:
-                                d.read_struct_field("lightIds", 1, |d| d.read_to_vec(D::read_u8))?,
-                            color:
-                                d.read_struct_field("color", 2, messages::Color::decode)?
-                        }
-                    }
-
-                    "setArduinoAddress" => {
-                        Msg::SetArduinoAddress {
-                            address:
-                                d.read_struct_field("address", 0, D::read_str)?
-                                .to_socket_addrs()
-                                .map_err(|e| d.error(format!("Failed to parse address: {}", e).as_str()))?
-                                .next().ok_or(d.error("No address was parsed"))?
-                        }
-                    }
-
-                    _ => return Err(d.error(format!("Unknown message type: {}", msg_type).as_str()))
-                })
-            })
-        })
-    }
-}
-
-
-
+#[derive(Serialize, Deserialize)]
 pub enum Response {
     State {
+        #[serde(rename = "arduinoAddress")]
         arduino_address: String,
         buildings: Vec<Building>
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Building {
     pub name: String,
+    #[serde(rename = "buildingId")]
     pub id: u8,
     pub lights: Vec<Light>
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Light {
+    #[serde(rename = "lightId")]
     pub id: u8,
-    pub color: messages::Color
+    pub color: town::Color
 }
 
 
-impl Encodable for Response {
-    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        match *self {
-            Response::State{ref arduino_address, ref buildings} => {
-                s.emit_struct("State", 1, |s| {
-                    s.emit_struct_field("type", 0, |s| {
-                        s.emit_str("state")
-                    })?;
-                    s.emit_struct_field("arduinoAddress", 1, |s| {
-                        s.emit_str(arduino_address)
-                    })?;
-                    s.emit_struct_field("buildings", 2, |s| {
-                        s.emit_from_vec(&buildings, |s, b| {
-                            b.encode(s)
-                        })
-                    })?;
-                    Ok(())
-                })
-            }
-        }
-    }
-}
-
-
-impl Encodable for Building {
-    fn encode<S:Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        s.emit_struct("Building", 3, |s| {
-            s.emit_struct_field("name", 0, |s| {
-                s.emit_str(self.name.as_str())
-            })?;
-            s.emit_struct_field("buildingId", 1, |s| {
-                s.emit_u8(self.id)
-            })?;
-            s.emit_struct_field("lights", 2, |s| {
-                s.emit_from_vec(&self.lights, |s, l| {
-                    l.encode(s)
-                })
-            })?;
-            Ok(())
-        })
-    }
-}
-
-impl Encodable for Light {
-    fn encode<S:Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        s.emit_struct("Light", 2, |s| {
-            s.emit_struct_field("lightId", 0, |s| {
-                s.emit_u8(self.id)
-            })?;
-            s.emit_struct_field("color", 1, |s| {
-                self.color.encode(s)
-            })?;
-            Ok(())
-        })
-    }
-}
-
-
-impl Decodable for messages::Color {
-    fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
-        d.read_str().and_then(|color| Ok(match color.as_str() {
-            "OFF" => messages::Color::OFF,
-            "WHITE" => messages::Color::WHITE,
-            "RED" => messages::Color::RED,
-            "ORANGE" => messages::Color::ORANGE,
-            "YELLOW" => messages::Color::YELLOW,
-            "GREEN" => messages::Color::GREEN,
-            "CYAN" => messages::Color::CYAN,
-            "BLUE" => messages::Color::BLUE,
-            "PURPLE" => messages::Color::PURPLE,
-            "MAGENTA" => messages::Color::MAGENTA,
-            _ => return Err(d.error(format!("Invalid color: {}", color.as_str()).as_str()))
-        }))
-    }
-}
-
-
-impl Encodable for messages::Color {
-    fn encode<S:Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        s.emit_str(match *self {
-            messages::Color::OFF => "OFF",
-            messages::Color::WHITE => "WHITE",
-            messages::Color::RED => "RED",
-            messages::Color::ORANGE => "ORANGE",
-            messages::Color::YELLOW => "YELLOW",
-            messages::Color::GREEN => "GREEN",
-            messages::Color::CYAN => "CYAN",
-            messages::Color::BLUE => "BLUE",
-            messages::Color::PURPLE => "PURPLE",
-            messages::Color::MAGENTA => "MAGENTA"
-        })
-    }
-}
 
 
 #[cfg(test)]
 mod tests {
-    use messages;
-    use rustc_serialize::json;
+    use serde_json;
     use std::net::{ToSocketAddrs};
     use super::*;
+    use town;
 
     #[test]
-    fn decode_init() {
-        let msg = r##"{"type":"getState"}"##;
-        let msg : Msg = json::decode(msg).unwrap();
+    fn deserialize_get_state() {
+        let msg = r##"{"GetState":null}"##;
+        let msg : Msg = serde_json::from_str(msg).unwrap();
         let expected = Msg::GetState;
         assert_eq!(msg, expected);
     }
 
     #[test]
-    fn decode_set_lights() {
-        let msg = r##"{"type":"setLights","buildingId":0,"lightIds":[1,2,4],"color":"RED"}"##;
-        let msg : Msg = json::decode(msg).unwrap();
+    fn deserialize_set_lights() {
+        let msg = r##"{"SetLights":{"buildingId":0,"lightIds":[1,2,4],"color":"RED"}}"##;
+        let msg : Msg = serde_json::from_str(msg).unwrap();
         let expected = Msg::SetLights{
             building_id: 0,
             light_ids: vec![1,2,4],
-            color: messages::Color::RED
+            color: town::Color::RED
         };
         assert_eq!(msg, expected);
     }
 
     #[test]
-    fn decode_set_arduino_address() {
-        let msg = r##"{"type":"setArduinoAddress","address":"127.0.0.1:12345"}"##;
-        let msg : Msg = json::decode(msg).unwrap();
+    fn deserialize_color() {
+        let red = serde_json::from_str::<town::Color>("\"RED\"").unwrap();
+        assert_eq!(red, town::Color::RED);
+
+        let cyan : town::Color = serde_json::from_str("\"CYAN\"").unwrap();
+        assert_eq!(cyan, town::Color::CYAN);
+
+        let off : town::Color = serde_json::from_str("\"OFF\"").unwrap();
+        assert_eq!(off, town::Color::OFF);
+
+        assert!(serde_json::from_str::<town::Color>("\"INVALID\"").is_err());
+    }
+
+    #[test]
+    fn serialize_color() {
+        assert_eq!(serde_json::to_string(&town::Color::OFF).unwrap(), "\"OFF\"");
+        assert_eq!(serde_json::to_string(&town::Color::RED).unwrap(), "\"RED\"");
+        assert_eq!(serde_json::to_string(&town::Color::MAGENTA).unwrap(), "\"MAGENTA\"");
+    }
+
+    #[test]
+    fn deserialize_set_arduino_address() {
+        let msg = r##"{"SetArduinoAddress":{"address":"127.0.0.1:12345"}}"##;
+        let msg : Msg = serde_json::from_str(msg).unwrap();
         let expected = Msg::SetArduinoAddress {
             address: "127.0.0.1:12345".to_socket_addrs().unwrap().next().unwrap()
         };
@@ -226,35 +112,35 @@ mod tests {
     }
 
     #[test]
-    fn encode_response_state() {
+    fn serialize_response_state() {
         let state = Response::State {
             arduino_address: "127.0.0.1:12345".to_string(),
             buildings: Vec::new()
         };
-        let state = json::encode(&state).unwrap();
-        let expected = r##"{"type":"state","arduinoAddress":"127.0.0.1:12345","buildings":[]}"##;
+        let state = serde_json::to_string(&state).unwrap();
+        let expected = r##"{"State":{"arduinoAddress":"127.0.0.1:12345","buildings":[]}}"##;
         assert_eq!(state, expected);
     }
 
     #[test]
-    fn encode_building() {
+    fn serialize_building() {
         let building = Building {
             name: "Cafe Corner".to_string(),
             id: 0,
             lights: Vec::new()
         };
-        let building = json::encode(&building).unwrap();
+        let building = serde_json::to_string(&building).unwrap();
         let expected = r##"{"name":"Cafe Corner","buildingId":0,"lights":[]}"##;
         assert_eq!(building, expected);
     }
 
     #[test]
-    fn encode_light() {
+    fn serialize_light() {
         let light = Light {
             id: 0,
-            color: messages::Color::RED
+            color: town::Color::RED
         };
-        let light = json::encode(&light).unwrap();
+        let light = serde_json::to_string(&light).unwrap();
         let expected = r##"{"lightId":0,"color":"RED"}"##;
         assert_eq!(light, expected);
     }
