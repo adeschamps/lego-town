@@ -1,17 +1,17 @@
 #include <Adafruit_NeoPixel.h>
-#include <SoftwareSerial.h>
 #include <WiFiEsp.h>
 #include <WiFiEspUdp.h>
 #include <messages.pb.h>
 #include <pb_decode.h>
 
-#include "log.hpp"
-
 #include "network_settings.h"
 
-#define NUM_LIGHTSTRIPS 3
-uint8_t lightstrip_pins[NUM_LIGHTSTRIPS] = {6, 7, 8};
-Adafruit_NeoPixel lightstrips[NUM_LIGHTSTRIPS];
+// docs: Adafruit_NeoPixel(uint16_t n, uint8_t p=6, neoPixelType t=NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel lightstrips[] = {
+  Adafruit_NeoPixel (9, 6),
+  Adafruit_NeoPixel (6, 7)
+};
+#define NUM_LIGHTSTRIPS sizeof(lightstrips) / sizeof(lightstrips[0])
 
 #define BUFFER_SIZE light_controller_Command_size
 
@@ -19,12 +19,14 @@ WiFiEspUDP Udp;
 
 uint32_t parse_color(light_controller_Color color);
 
-#if 0
+#define ENABLE_DEBUG 0
+#if ENABLE_DEBUG
 #define DEBUG_LIGHT(color) {                                            \
   for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)                        \
   {                                                                     \
-    lightstrips[i].setPixelColor(0, parse_color(light_controller_Color_##color)); \
-    lightstrips[i].show();                                              \
+    auto & lightstrip = lightstrips[i];                                 \
+    lightstrip.setPixelColor(0, parse_color(light_controller_Color_##color)); \
+    lightstrip.show();                                                  \
   }                                                                     \
   }
 #else
@@ -47,14 +49,8 @@ inline void halt()
 
 void setup()
 {
-  // Initialize lightstrips with 1 light
   for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
-  {
-    auto len = 9;
-    auto pin = lightstrip_pins[i];
-    lightstrips[i] = Adafruit_NeoPixel(len, pin, NEO_GRB + NEO_KHZ800);
     lightstrips[i].begin();
-  }
 
   DEBUG_LIGHT(BLUE);
 
@@ -84,6 +80,14 @@ void setup()
   }
 
   DEBUG_LIGHT(GREEN);
+
+  for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
+  {
+    auto & lightstrip = lightstrips[i];
+    auto num_pixels = lightstrip.numPixels();
+    for (uint8_t n = 0; n != num_pixels; ++n)
+      lightstrip.setPixelColor(n, parse_color(light_controller_Color_WHITE));
+  }
 }
 
 // Convert a color enum to an int for setting an LED
@@ -130,32 +134,6 @@ inline void handle(light_controller_SetLights const & set_lights)
 }
 
 
-// NOTE: Currently a no-op
-inline void handle(light_controller_Initialize const & initialize)
-{
-#if 0
-  for (uint8_t i = 0; i != initialize.string_lengths_count; ++i)
-  {
-    DEBUG_BLINK(YELLOW);
-  }
-
-  // Reset
-  for (uint8_t i = 0; i != NUM_LIGHTSTRIPS; ++i)
-    lightstrips[i].updateLength(0);
-
-  // Init
-  for (uint8_t i = 0; i != initialize.string_lengths_count && i != NUM_LIGHTSTRIPS; ++i)
-  {
-    auto len = initialize.string_lengths[i];
-    auto pin = lightstrip_pins[i];
-    lightstrips[i] = Adafruit_NeoPixel(len, pin, NEO_GRB + NEO_KHZ800);
-    lightstrips[i].begin();
-  }
-#endif
-}
-
-bool even_message = true;
-
 inline void handle_messages()
 {
   auto packet_length = Udp.parsePacket();
@@ -196,10 +174,6 @@ inline void handle_messages()
   {
   case light_controller_Command_set_lights_tag:
     handle(command.CommandType.set_lights);
-    break;
-
-  case light_controller_Command_initialize_tag:
-    handle(command.CommandType.initialize);
     break;
   }
 }
