@@ -22,7 +22,6 @@ private:
   // Handle commands from the server
   void handle_messages();
   bool handle_message(light_controller::SetLights const &);
-  bool handle_message(light_controller::Initialize const &);
 
   // Draws the window
   void draw();
