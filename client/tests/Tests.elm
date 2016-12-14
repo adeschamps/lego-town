@@ -19,12 +19,21 @@ all =
     describe "Town API Decoders"
         [ testDecode "State"
             TownApi.msg
-            """{"type":"state","arduinoAddress":"127.0.0.1:12345","buildings":[]}"""
+            """{"State": {"arduinoAddress":"127.0.0.1:12345","buildings":[]}}"""
           <|
             TownApi.State "127.0.0.1:12345" []
         , testDecode "SetLights"
             TownApi.msg
-            """{"type":"setLights", "buildingId":1, "lights":[{"lightId":3, "color":"#ff0000"}]}"""
+            """{"SetLights": {"buildingId":1, "lights":[{"lightId":3, "color":"RED"}]}}"""
           <|
-            TownApi.SetLights 1 [ { lightId = 3, color = Color.rgb 255 0 0 } ]
+            TownApi.SetLights 1 [ { lightId = 3, color = TownApi.RED } ]
+        , test "invalid"
+            (\() ->
+                case Json.Decode.decodeString TownApi.msg """{"Invalid": {"some":"value"}}""" of
+                    Ok _ ->
+                        Expect.fail "This should fail"
+
+                    Err _ ->
+                        Expect.pass
+            )
         ]
