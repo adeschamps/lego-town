@@ -54,24 +54,24 @@ buildingId =
 
 msg : Decoder Msg
 msg =
-    (field "type" string) |> andThen subMsg
+    oneOf
+        [ field "State" state
+        , field "SetLights" setLights
+        ]
 
 
-subMsg : String -> Decoder Msg
-subMsg msgType =
-    case msgType of
-        "state" ->
-            succeed State
-                |: (field "arduinoAddress" string)
-                |: (field "buildings" (list buildingInfo))
+state : Decoder Msg
+state =
+    succeed State
+        |: (field "arduinoAddress" string)
+        |: (field "buildings" (list buildingInfo))
 
-        "setLights" ->
-            succeed SetLights
-                |: (field "buildingId" buildingId)
-                |: (field "lights" (list lightState))
 
-        _ ->
-            fail ("invalid message type: " ++ msgType)
+setLights : Decoder Msg
+setLights =
+    succeed SetLights
+        |: (field "buildingId" buildingId)
+        |: (field "lights" (list lightState))
 
 
 buildingInfo : Decoder BuildingInfo
@@ -143,34 +143,43 @@ type alias Type =
 getState : Value
 getState =
     Enc.object
-        [ ( "type", Enc.string "getState" )
+        [ ( "GetState", Enc.null )
         ]
 
 
 setBuilding : Int -> Color -> Value
 setBuilding buildingId color =
     Enc.object
-        [ ( "type", Enc.string "setBuilding" )
-        , ( "buildingId", Enc.int buildingId )
-        , ( "color", encColor color )
+        [ ( "SetBuilding"
+          , Enc.object
+                [ ( "buildingId", Enc.int buildingId )
+                , ( "color", encColor color )
+                ]
+          )
         ]
 
 
 setLight : Int -> Int -> Color -> Value
 setLight buildingId lightId color =
     Enc.object
-        [ ( "type", Enc.string "setLight" )
-        , ( "buildingId", Enc.int buildingId )
-        , ( "lightId", Enc.int lightId )
-        , ( "color", encColor color )
+        [ ( "SetLight"
+          , Enc.object
+                [ ( "buildingId", Enc.int buildingId )
+                , ( "lightId", Enc.int lightId )
+                , ( "color", encColor color )
+                ]
+          )
         ]
 
 
 setArduinoAddress : String -> Value
 setArduinoAddress address =
     Enc.object
-        [ ( "type", Enc.string "setArduinoAddress" )
-        , ( "address", Enc.string address )
+        [ ( "SetArduinoAddress"
+          , Enc.object
+                [ ( "address", Enc.string address )
+                ]
+          )
         ]
 
 
