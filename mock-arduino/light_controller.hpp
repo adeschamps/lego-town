@@ -14,7 +14,7 @@
 class LightController : public Arduino
 {
 public:
-  LightController(Poco::Net::SocketAddress address);
+  LightController(Poco::Net::SocketAddress address, std::vector<size_t> const & lengths);
 
 private:
   virtual LoopStatus loop() override;

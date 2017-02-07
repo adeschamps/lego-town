@@ -4,7 +4,7 @@
 #include <iostream>
 #include <thread>
 
-LightController::LightController(Poco::Net::SocketAddress address)
+LightController::LightController(Poco::Net::SocketAddress address, std::vector<size_t> const & lengths)
   : window(sf::VideoMode(100, 100), "LEGO Town")
   , address(address)
   , message_buffer(100, '\0')
@@ -14,7 +14,7 @@ LightController::LightController(Poco::Net::SocketAddress address)
 
 
   lightstrips.clear();
-  for (auto length : {9, 6})
+  for (auto length : lengths)
     lightstrips.emplace_back(length);
 }
 
