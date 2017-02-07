@@ -1,22 +1,19 @@
 #include "light_controller.hpp"
-
-#include <sstream>
+#include <tclap/CmdLine.h>
 
 // Drive the main logic of the Arduino.
 int main(int argc, char* argv[])
 {
-  // Optionally parse the port from the command line
-  auto port = [&]{
-    uint16_t result = 12345;
-    if (argc > 1) {
-      auto ss = std::stringstream(argv[1]);
-      uint16_t port;
-      if (ss >> port) { result = port; }
-    }
-    return result;
-  }();
+  TCLAP::CmdLine cmd("Mock Ardunio Light Controller");
+  TCLAP::ValueArg<uint16_t> port_arg
+    ("p", "port", "Incoming message port", false, 12345, "port", cmd);
+  TCLAP::UnlabeledMultiArg<size_t> lengths_arg
+    ("lenghts", "Number of lights in each strip", false, "lengths", cmd);
+  cmd.parse(argc, argv);
+
+  auto port = port_arg.getValue();
 
   Poco::Net::SocketAddress address (port);
-  LightController arduino (address);
+  LightController arduino (address, lengths_arg.getValue());
   arduino.run();
 }
