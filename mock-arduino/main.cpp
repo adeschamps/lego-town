@@ -13,7 +13,10 @@ int main(int argc, char* argv[])
 
   auto port = port_arg.getValue();
 
+  auto light_lengths = lengths_arg.getValue().empty()
+    ? std::vector<size_t>({ 9, 6 })
+    : lengths_arg.getValue();
   Poco::Net::SocketAddress address (port);
-  LightController arduino (address, lengths_arg.getValue());
+  LightController arduino (address, light_lengths);
   arduino.run();
 }
